@@ -5,7 +5,10 @@ import { useMemo, useState } from "react";
 import { AddOnSelector } from "@/components/review/AddOnSelector";
 import { PriceSummary } from "@/components/review/PriceSummary";
 import { VehicleDetails } from "@/components/review/VehicleDetails";
-import { ADDON_CATALOG, computeAddOnLineItem } from "@/lib/addons";
+import {
+  computeSelectedAddOnLines,
+  type AddOnCatalogItem,
+} from "@/lib/addons";
 import {
   computeFullPriceBreakdown,
   type QuoteBreakdown,
@@ -15,11 +18,13 @@ import type { Vehicle } from "@/server/data";
 export function ReviewWithDatesClient({
   vehicle,
   quote,
+  addons,
   start,
   end,
 }: {
   vehicle: Vehicle;
   quote: QuoteBreakdown;
+  addons: AddOnCatalogItem[];
   start: string;
   end: string;
 }) {
@@ -30,17 +35,8 @@ export function ReviewWithDatesClient({
 
   const addOnLines = useMemo(
     () =>
-      ADDON_CATALOG.filter((addon) => selectedSlugs.has(addon.slug)).map(
-        (addon) => {
-          const line = computeAddOnLineItem(addon, quote.durationHours);
-          return {
-            slug: addon.slug,
-            label: line.label,
-            totalCents: line.totalCents,
-          };
-        },
-      ),
-    [selectedSlugs, quote.durationHours],
+      computeSelectedAddOnLines(addons, selectedSlugs, quote.durationHours),
+    [addons, selectedSlugs, quote.durationHours],
   );
 
   const breakdown = computeFullPriceBreakdown(quote, addOnLines);
@@ -76,6 +72,7 @@ export function ReviewWithDatesClient({
         <div className="space-y-8">
           <VehicleDetails vehicle={vehicle} />
           <AddOnSelector
+            addons={addons}
             durationHours={quote.durationHours}
             selectedSlugs={selectedSlugs}
             onToggle={toggleAddOn}

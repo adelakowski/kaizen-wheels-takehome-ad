@@ -115,6 +115,13 @@ export function PriceSummary({
           />
         )}
 
+        {(breakdown.discountCents > 0 || breakdown.addOnLines.length > 0) && (
+          <LineItem
+            label="Subtotal after discount"
+            value={formatCents(breakdown.discountedBaseCents)}
+          />
+        )}
+
         {breakdown.addOnLines.map((line) => (
           <LineItem
             key={line.slug}

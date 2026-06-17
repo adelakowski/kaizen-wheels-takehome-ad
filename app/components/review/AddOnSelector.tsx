@@ -4,7 +4,6 @@ import { Checkbox } from "@/components/shared/ui/checkbox";
 import { Label } from "@/components/shared/ui/label";
 import { cn } from "@/lib/classnames";
 import {
-  ADDON_CATALOG,
   computeAddOnLineItem,
   formatPricingLabel,
   type AddOnCatalogItem,
@@ -12,6 +11,7 @@ import {
 import { formatCents } from "@/lib/formatters";
 
 export interface AddOnSelectorProps {
+  addons: AddOnCatalogItem[];
   durationHours: number;
   selectedSlugs: Set<string>;
   onToggle: (slug: string) => void;
@@ -63,13 +63,14 @@ function AddOnRow({
 }
 
 export function AddOnSelector({
+  addons,
   durationHours,
   selectedSlugs,
   onToggle,
   className,
 }: AddOnSelectorProps) {
-  const perRental = ADDON_CATALOG.filter((a) => a.pricingModel === "per_rental");
-  const perDay = ADDON_CATALOG.filter((a) => a.pricingModel === "per_day");
+  const perRental = addons.filter((a) => a.pricingModel === "per_rental");
+  const perDay = addons.filter((a) => a.pricingModel === "per_day");
 
   return (
     <div className={cn("space-y-6", className)}>

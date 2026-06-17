@@ -29,7 +29,7 @@ async function seed() {
       maxPassengers: vehicle.max_passengers,
       classification: vehicle.classification,
       thumbnailUrl: vehicle.thumbnail_url,
-      hourlyRateCents: vehicle.daily_rate_cents,
+      dailyRateCents: vehicle.daily_rate_cents,
     })),
   );
 

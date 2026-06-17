@@ -25,8 +25,8 @@ function buildSearchConditions(filters: SearchFilters) {
   }
 
   conditions.push(
-    gte(vehicles.hourlyRateCents, filters.minDailyRateCents),
-    lte(vehicles.hourlyRateCents, filters.maxDailyRateCents),
+    gte(vehicles.dailyRateCents, filters.minDailyRateCents),
+    lte(vehicles.dailyRateCents, filters.maxDailyRateCents),
   );
 
   if (filters.minPassengers > 1) {

@@ -3,6 +3,7 @@ import { parseAndValidateTimeRange } from "@/lib/pricing";
 import type { SearchFilters } from "@/lib/search-params";
 import { DEFAULT_FILTERS } from "@/lib/search-params";
 import {
+  getAddons as getAddonsQuery,
   getReservationById,
   getVehicleById,
   searchVehicles as searchVehiclesQuery,
@@ -72,9 +73,14 @@ async function getQuote(input: {
   return calculateQuote(vehicle.daily_rate_cents, start, end);
 }
 
+async function listAddons() {
+  return getAddonsQuery();
+}
+
 export const API = {
   searchVehicles,
   getVehicle,
   getReservation,
   getQuote,
+  listAddons,
 };

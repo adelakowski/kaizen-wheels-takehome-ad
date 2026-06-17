@@ -1,6 +1,8 @@
+import type { AddOnCatalogItem } from "@/lib/addons";
 import type { SearchFilters } from "@/lib/search-params";
 import { DEFAULT_FILTERS } from "@/lib/search-params";
 import type { Reservation, Vehicle } from "./data";
+import { listActiveAddons } from "./repositories/addons";
 import { findReservationById } from "./repositories/reservations";
 import {
   findVehicleById,
@@ -29,4 +31,8 @@ export async function searchVehicles(
   filters: SearchFilters,
 ): Promise<Vehicle[]> {
   return searchVehiclesRepo(filters);
+}
+
+export async function getAddons(): Promise<AddOnCatalogItem[]> {
+  return listActiveAddons();
 }

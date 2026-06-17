@@ -260,8 +260,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "hourly_rate_cents": {
-          "name": "hourly_rate_cents",
+        "daily_rate_cents": {
+          "name": "daily_rate_cents",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -290,11 +290,11 @@
           "method": "btree",
           "with": {}
         },
-        "idx_vehicles_hourly_rate": {
-          "name": "idx_vehicles_hourly_rate",
+        "idx_vehicles_daily_rate": {
+          "name": "idx_vehicles_daily_rate",
           "columns": [
             {
-              "expression": "hourly_rate_cents",
+              "expression": "daily_rate_cents",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

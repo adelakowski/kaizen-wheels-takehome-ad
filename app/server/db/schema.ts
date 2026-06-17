@@ -40,14 +40,14 @@ export const vehicles = pgTable(
     maxPassengers: integer("max_passengers").notNull(),
     classification: classificationEnum("classification").notNull(),
     thumbnailUrl: text("thumbnail_url").notNull(),
-    hourlyRateCents: integer("hourly_rate_cents").notNull(), // stored as daily rate cents
+    dailyRateCents: integer("daily_rate_cents").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (table) => [
     index("idx_vehicles_classification").on(table.classification),
-    index("idx_vehicles_hourly_rate").on(table.hourlyRateCents),
+    index("idx_vehicles_daily_rate").on(table.dailyRateCents),
     index("idx_vehicles_max_passengers").on(table.maxPassengers),
   ],
 );

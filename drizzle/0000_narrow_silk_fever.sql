@@ -34,7 +34,7 @@ CREATE TABLE "vehicles" (
 	"max_passengers" integer NOT NULL,
 	"classification" "classification" NOT NULL,
 	"thumbnail_url" text NOT NULL,
-	"hourly_rate_cents" integer NOT NULL,
+	"daily_rate_cents" integer NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -42,5 +42,5 @@ ALTER TABLE "reservations" ADD CONSTRAINT "reservations_vehicle_id_vehicles_id_f
 CREATE INDEX "idx_reservations_vehicle_id" ON "reservations" USING btree ("vehicle_id");--> statement-breakpoint
 CREATE INDEX "idx_reservations_time_range" ON "reservations" USING btree ("vehicle_id","start_time","end_time");--> statement-breakpoint
 CREATE INDEX "idx_vehicles_classification" ON "vehicles" USING btree ("classification");--> statement-breakpoint
-CREATE INDEX "idx_vehicles_hourly_rate" ON "vehicles" USING btree ("hourly_rate_cents");--> statement-breakpoint
+CREATE INDEX "idx_vehicles_daily_rate" ON "vehicles" USING btree ("daily_rate_cents");--> statement-breakpoint
 CREATE INDEX "idx_vehicles_max_passengers" ON "vehicles" USING btree ("max_passengers");

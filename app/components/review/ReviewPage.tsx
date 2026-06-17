@@ -45,17 +45,21 @@ export async function ReviewPage({
     );
   }
 
-  const quote = await API.getQuote({
-    vehicleId: id,
-    startTime: new Date(start).toISOString(),
-    endTime: new Date(end).toISOString(),
-  });
+  const [quote, addons] = await Promise.all([
+    API.getQuote({
+      vehicleId: id,
+      startTime: new Date(start).toISOString(),
+      endTime: new Date(end).toISOString(),
+    }),
+    API.listAddons(),
+  ]);
 
   return (
     <AppShell>
       <ReviewWithDatesClient
         vehicle={vehicle}
         quote={quote}
+        addons={addons}
         start={start}
         end={end}
       />

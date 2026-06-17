@@ -1,6 +1,7 @@
-export type PricingModel = "per_rental" | "per_day";
-
 import { rentalDayCount } from "@/lib/pricing";
+import type { AddOnLine } from "@/lib/quote";
+
+export type PricingModel = "per_rental" | "per_day";
 
 export type AddOnCatalogItem = {
   id: string;
@@ -10,49 +11,6 @@ export type AddOnCatalogItem = {
   pricingModel: PricingModel;
   priceCents: number;
 };
-
-export const ADDON_CATALOG: AddOnCatalogItem[] = [
-  {
-    id: "1",
-    slug: "gps",
-    name: "GPS Navigation",
-    description: "Suction-mount GPS unit",
-    pricingModel: "per_rental",
-    priceCents: 500,
-  },
-  {
-    id: "2",
-    slug: "child_seat",
-    name: "Child seat",
-    description: "Forward-facing booster",
-    pricingModel: "per_day",
-    priceCents: 800,
-  },
-  {
-    id: "3",
-    slug: "extra_driver",
-    name: "Additional driver",
-    description: "Allow a second registered driver",
-    pricingModel: "per_day",
-    priceCents: 1200,
-  },
-  {
-    id: "4",
-    slug: "prepaid_fuel",
-    name: "Pre-paid fuel",
-    description: "Return the car empty",
-    pricingModel: "per_rental",
-    priceCents: 4000,
-  },
-  {
-    id: "5",
-    slug: "roadside",
-    name: "Roadside assistance",
-    description: "24/7 emergency support",
-    pricingModel: "per_day",
-    priceCents: 400,
-  },
-];
 
 export function computeAddOnLineItem(
   addon: AddOnCatalogItem,
@@ -81,4 +39,21 @@ export function formatPricingLabel(addon: AddOnCatalogItem): string {
     return "per rental";
   }
   return "per day";
+}
+
+export function computeSelectedAddOnLines(
+  catalog: AddOnCatalogItem[],
+  selectedSlugs: Set<string>,
+  durationHours: number,
+): AddOnLine[] {
+  return catalog
+    .filter((addon) => selectedSlugs.has(addon.slug))
+    .map((addon) => {
+      const line = computeAddOnLineItem(addon, durationHours);
+      return {
+        slug: addon.slug,
+        label: line.label,
+        totalCents: line.totalCents,
+      };
+    });
 }

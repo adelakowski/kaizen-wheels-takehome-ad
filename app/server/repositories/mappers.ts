@@ -1,5 +1,6 @@
 import { DateTime } from "luxon";
 
+import type { AddOnCatalogItem } from "@/lib/addons";
 import type { Reservation, Vehicle } from "@/server/data";
 import type {
   AddonRow,
@@ -17,7 +18,7 @@ export function toVehicle(row: VehicleRow): Vehicle {
     max_passengers: row.maxPassengers,
     classification: row.classification,
     thumbnail_url: row.thumbnailUrl,
-    daily_rate_cents: row.hourlyRateCents,
+    daily_rate_cents: row.dailyRateCents,
   };
 }
 
@@ -31,7 +32,7 @@ export function toReservation(row: ReservationRow): Reservation {
   };
 }
 
-export function toAddonCatalogItem(row: AddonRow) {
+export function toAddonCatalogItem(row: AddonRow): AddOnCatalogItem {
   return {
     id: row.id,
     slug: row.slug,

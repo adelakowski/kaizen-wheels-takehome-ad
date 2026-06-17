@@ -2,86 +2,154 @@
 
 # Kaizen Wheels
 
-Premium car rental take-home — Next.js 16, Postgres, Drizzle ORM.
+Premium car rental take-home — Next.js 16, PostgreSQL 16, Drizzle ORM.
 
 ## Prerequisites
 
-- **Node.js** 20+ and npm
-- **Docker** (for local Postgres)
+| Tool | Version | Notes |
+|------|---------|-------|
+| **Node.js** | 20+ | LTS recommended |
+| **npm** | 10+ | Ships with Node |
+| **Docker Desktop** | Latest | Runs local Postgres via Compose |
+
+You need Docker running before starting the database. The app will not work without Postgres — vehicle search, quotes, and add-ons all read from the database.
 
 ## Local setup
 
-1. **Install dependencies**
+### 1. Clone and install
 
-   ```bash
-   npm install
-   ```
+```bash
+git clone <repo-url>
+cd kaizen-wheels-takehome-ad
+npm install
+```
 
-2. **Environment variables**
+### 2. Configure environment
 
-   ```bash
-   cp .env.example .env
-   ```
+Copy the example env file and adjust if needed:
 
-   | Variable | Default | Purpose |
-   |----------|---------|---------|
-   | `DATABASE_URL` | `postgresql://kaizen:kaizen@localhost:5432/kaizen_wheels` | Postgres connection |
-   | `TZ` | `America/Los_Angeles` | Canonical rental timezone |
-   | `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | App base URL |
+```bash
+cp .env.example .env
+```
 
-3. **Start Postgres**
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `DATABASE_URL` | `postgresql://kaizen:kaizen@localhost:5432/kaizen_wheels` | Postgres connection string |
+| `TZ` | `America/Los_Angeles` | Canonical rental timezone (holiday + pricing logic) |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | App base URL |
 
-   ```bash
-   docker compose up -d
-   ```
+Defaults match `docker-compose.yml` — you usually do not need to change anything for local dev.
 
-4. **Run migrations and seed**
+### 3. Start Postgres
 
-   ```bash
-   npm run db:setup
-   ```
+```bash
+docker compose up -d
+```
 
-   Or step by step:
+Wait until the container is healthy:
 
-   ```bash
-   npm run db:migrate   # apply drizzle migrations
-   npm run db:seed      # load vehicles, reservations, add-on catalog
-   ```
+```bash
+docker compose ps
+```
 
-5. **Start the dev server**
+You should see `postgres` with status **healthy**. The database listens on `localhost:5432`.
 
-   ```bash
-   npm run dev
-   ```
+### 4. Migrate and seed
 
-   Open [http://localhost:3000](http://localhost:3000).
+Apply schema migrations and load sample data in one step:
 
-## Database commands
+```bash
+npm run db:setup
+```
+
+Or run each step separately:
+
+```bash
+npm run db:migrate   # create tables from drizzle/ migrations
+npm run db:seed      # truncate + load vehicles, reservations, add-ons
+```
+
+**What gets seeded:**
+
+- **12 vehicles** — stable UUIDs, daily rates, classifications
+- **9 reservations** — relative to today in `America/Los_Angeles` (for availability demos)
+- **5 add-ons** — GPS, child seat, extra driver, pre-paid fuel, roadside assistance
+
+Re-running `npm run db:seed` is safe — it truncates and reloads all three tables.
+
+### 5. Start the dev server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+**Quick smoke test:**
+
+1. Pick pickup/return dates in the booking bar → **Show cars**
+2. Select a vehicle → review page with quote and optional extras
+3. Toggle add-ons — totals update live in the sidebar
+
+### 6. Verify (optional)
+
+```bash
+npm run ts      # TypeScript check
+npm run build   # production build
+```
+
+## npm scripts
 
 | Command | Description |
 |---------|-------------|
+| `npm run dev` | Start Next.js dev server (port 3000) |
+| `npm run build` | Production build |
+| `npm run start` | Run production server (after `build`) |
+| `npm run ts` | TypeScript check (`tsc --noEmit`) |
 | `npm run db:generate` | Generate SQL migrations from `app/server/db/schema.ts` |
 | `npm run db:migrate` | Apply pending migrations |
 | `npm run db:seed` | Truncate and re-seed vehicles, reservations, add-ons |
 | `npm run db:setup` | `db:migrate` + `db:seed` |
 
+## Database commands
+
+Schema lives in `app/server/db/schema.ts`. Migrations are generated into `drizzle/`.
+
+To reset everything from scratch:
+
+```bash
+docker compose down -v   # remove Postgres volume (optional — wipes all data)
+docker compose up -d
+npm run db:setup
+```
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| `ECONNREFUSED` on port 5432 | Start Docker and run `docker compose up -d` |
+| Port 5432 already in use | Stop the other Postgres instance, or change the host port in `docker-compose.yml` and update `DATABASE_URL` |
+| `relation "vehicles" does not exist` | Run `npm run db:migrate` |
+| Empty vehicle list / API errors | Run `npm run db:seed` (or `npm run db:setup`) |
+| Seed fails mid-run | Ensure Postgres is healthy (`docker compose ps`), then retry `npm run db:setup` |
+
 ## Project structure
 
 ```
-app/server/db/          Drizzle schema + client
-app/server/repositories/  Postgres query layer
-app/server/seed/        Seed fixtures (stable UUIDs)
-scripts/seed.ts         Migration seed runner
+app/
+  components/           UI (search, review, shared shell)
+  lib/                  Domain helpers (pricing, discounts, add-ons, search params)
+  server/
+    db/                 Drizzle schema + client
+    repositories/       Postgres query layer
+    seed/               Seed fixtures (stable UUIDs)
+scripts/seed.ts         Seed runner
 drizzle/                Generated SQL migrations
+docker-compose.yml      Local Postgres 16
 ```
 
-## Type checking
+See [DECISIONS.md](./DECISIONS.md) for architecture trade-offs and [PROGRESS.txt](./PROGRESS.txt) for implementation status.
 
-```bash
-npm run ts
-```
-
----
 
 ## Project requirements
 
@@ -95,17 +163,17 @@ Kaizen Labs brand (forest green + lime accent), SIXT-style sticky booking bar, f
 
 Vehicles, reservations, and add-on catalog live in **PostgreSQL 16** via **Drizzle ORM**. See setup above.
 
-### **Part 3: Filters**
+### **Part 3: Filters** — complete
 
-Date/time availability filtering plus class, price, passengers, and make.
+Date/time availability filtering plus class, daily price, passengers, and make.
 
-### **Part 4: Discounts**
+### **Part 4: Discounts** — complete
 
 Holiday (17%) vs duration ($10/hr after 3 days) — non-stackable, best price wins.
 
-### **Part 5: Optional add-ons**
+### **Part 5: Optional add-ons** — complete
 
-Review-page add-on selection with live line-item breakdown.
+Review-page add-on selection from the Postgres catalog with live line-item breakdown.
 
 See the original take-home brief below for full requirements on Parts 3–5.
 

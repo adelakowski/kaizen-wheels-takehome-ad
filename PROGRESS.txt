@@ -56,7 +56,7 @@ Infrastructure
   [x] npm scripts: db:generate, db:migrate, db:seed, db:setup
 
 Schema (app/server/db/schema.ts)
-  [x] vehicles — UUID PK, classification enum, daily_rate_cents (stored as hourly_rate_cents column)
+  [x] vehicles — UUID PK, classification enum, daily_rate_cents
   [x] reservations — FK to vehicles, timestamptz, price/discount columns
   [x] addons — catalog table (slug, pricing_model enum, price_cents)
   [x] Indexes on classification, daily rate, passengers, reservation time range
@@ -119,8 +119,7 @@ Verification
   [x] npm run ts — passes
   [x] npm run build — passes
 
-Known limitations (by design — addressed in Part 5)
-  - AddOnSelector still uses static app/lib/addons.ts (Part 5)
+Known limitations (by design)
   - Location input remains UI-only
 
 ================================================================================
@@ -147,6 +146,32 @@ Verification
   [x] npm run build — passes
 
 ================================================================================
+PART 5: EXTENSIBLE ADD-ONS ARCHITECTURE — COMPLETE
+================================================================================
+
+Domain (app/lib/addons.ts)
+  [x] AddOnCatalogItem type + computeAddOnLineItem (per_rental / per_day)
+  [x] computeSelectedAddOnLines — maps selected slugs to AddOnLine[]
+  [x] formatPricingLabel — display helper
+  [x] Static ADDON_CATALOG removed; catalog lives in Postgres
+
+Data layer
+  [x] repositories/addons.ts — listActiveAddons() ordered by sort_order
+  [x] data_helpers.getAddons() + API.listAddons()
+  [x] toAddonCatalogItem mapper typed to AddOnCatalogItem
+
+Checkout (PRD §5.3–5.4)
+  [x] ReviewPage — parallel fetch quote + addons from DB
+  [x] ReviewWithDatesClient — useState<Set<string>> for selected slugs
+  [x] useMemo → computeSelectedAddOnLines → computeFullPriceBreakdown
+  [x] AddOnSelector — receives catalog prop; grouped per rental / per day
+  [x] PriceSummary — subtotal after discount line before add-ons
+
+Verification
+  [x] npm run ts — passes
+  [x] npm run build — passes
+
+================================================================================
 REMAINING PARTS
 ================================================================================
-  [ ] Part 5: Add-ons catalog in DB wired to checkout
+  (none — all PRD parts complete)
