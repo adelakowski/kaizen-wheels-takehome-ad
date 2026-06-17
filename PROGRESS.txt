@@ -5,32 +5,56 @@ Last updated: 2026-06-17
 PART 1: STYLING, UX & DESIGN SYSTEM — COMPLETE
 ================================================================================
 
+Design system
+  [x] UI-UX-Pro-Max-Skill installed at .cursor/skills/ui-ux-pro-max/
+  [x] Persisted tokens at design-system/kaizen-wheels/MASTER.md
+  [x] PRD Part 1 updated (MCP replaced with UI-UX-Pro-Max workflow)
+
 Brand (Kaizen Labs — https://www.kaizenlabs.co/)
   [x] Primary green #00231C, accent lime #C3F731, white header, Inter typography
-  [x] KaizenLogo component (mountain-peak K mark, light/dark variants)
-  [x] PRD + design-system MASTER updated (SIXT → Kaizen Labs)
+  [x] KaizenLogo — public/kaizen-mark.png mark + wordmark (light/dark variants)
+  [x] CSS tokens in app/index.css; .kaizen-cta pill buttons (rounded-full)
 
-Theme & layout
-  [x] CSS tokens in app/index.css; .kaizen-cta pill buttons
-  [x] AppShell — white header, green footer, Get started pill CTA
-  [x] SearchHero — green hero, lime eyebrow, white booking widget
+Theme & shell
+  [x] AppShell — StickySiteHeader + hero slot + main + green footer
+  [x] StickySiteHeader — sticky white nav; booking bar sits inline (no card wrapper)
+  [x] SearchHero — green hero headline + lime eyebrow + TrustBadges (no widget in hero)
 
-Search page
-  [x] FilterBar — Show cars green pill CTA
+Search page (SIXT-style sticky booking bar)
+  [x] FilterBar — service tabs, location, pickup/return date+time, Show cars CTA
+  [x] FilterBar — secondary row: driver age, corporate rate, collapsible More filters
+  [x] FilterBar — aligned label/input row; + Different return location in label row
+  [x] FilterBar — mobile bottom sheet; Clear all removed to shorten menu height
+  [x] URL sync for dates/filters via app/lib/search-params.ts + app/lib/filters.ts
   [x] TrustBadges — lime icon badges on hero
-  [x] VehicleGrid / VehicleCard — rounded cards, green Select pills
+  [x] VehicleGrid / VehicleCard — rounded cards, green Select pill CTAs
 
 Review page
-  [x] PriceSummary — green header sidebar, Confirm booking pill
-  [x] AddOnSelector, VehicleDetails styled to match brand
+  [x] ReviewPage — two-column layout
+  [x] PriceSummary — green header sidebar, line items, Confirm booking pill
+  [x] AddOnSelector — grouped extras with live subtotals (app/lib/addons.ts)
+  [x] VehicleDetails styled to match brand
+  [x] Quote breakdown helper at app/lib/quote.ts
+
+UX checklist (Part 1 pre-delivery)
+  [x] Lucide icons only; cursor-pointer on clickables
+  [x] Hover transitions; prefers-reduced-motion respected
+  [x] shadcn primitives under app/components/shared/ui/
+  [x] Responsive: desktop sticky bar, mobile sheet fallback
 
 Verification
   [x] npm run ts — passes
 
+Known Part 1 limitations (by design — addressed in Parts 2–5)
+  - Location input is UI-only (not persisted or used in search)
+  - Filters apply client-side against in-memory seed data
+  - Add-ons catalog is static (app/lib/addons.ts), not DB-backed
+  - Discount badges on cards are display-only until Part 4
+
 ================================================================================
 REMAINING PARTS
 ================================================================================
-  [ ] Part 2: PostgreSQL persistence
-  [ ] Part 3: Availability-aware search
-  [ ] Part 4: Non-stackable discount engine
-  [ ] Part 5: Add-ons catalog in DB
+  [ ] Part 2: PostgreSQL persistence (Drizzle schema, migrations, seed)
+  [ ] Part 3: Availability-aware search (overlap SQL + server-side filters)
+  [ ] Part 4: Non-stackable discount engine (holiday % vs duration $/hr)
+  [ ] Part 5: Add-ons catalog in DB wired to checkout
