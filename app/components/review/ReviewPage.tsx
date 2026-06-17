@@ -6,7 +6,6 @@ import { VehicleDetails } from "@/components/review/VehicleDetails";
 import { AppShell } from "@/components/shared/AppShell";
 import { ErrorFallback } from "@/components/shared/ErrorFallback";
 import { Button } from "@/components/shared/ui/button";
-import { toQuoteBreakdown } from "@/lib/quote";
 import { API } from "@/server/api";
 
 export async function ReviewPage({
@@ -46,12 +45,11 @@ export async function ReviewPage({
     );
   }
 
-  const rawQuote = await API.getQuote({
+  const quote = await API.getQuote({
     vehicleId: id,
     startTime: new Date(start).toISOString(),
     endTime: new Date(end).toISOString(),
   });
-  const quote = toQuoteBreakdown(rawQuote);
 
   return (
     <AppShell>

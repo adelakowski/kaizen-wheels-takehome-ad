@@ -86,7 +86,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 │ max_passengers INT  │         │ discount_type   ENUM|null │  │
 │ classification ENUM │         │ discount_cents  INT       │  │
 │ thumbnail_url TEXT  │         │ total_price_cents INT     │  │
-│ hourly_rate_cents INT│        │ created_at      TIMESTAMPTZ│  │
+│ daily_rate_cents INT │        │ created_at      TIMESTAMPTZ│  │
 │ created_at  TIMESTAMPTZ│       └──────────────────────────┘  │
 └─────────────────────┘                                         │
                                                                 │
@@ -138,7 +138,7 @@ export const vehicles = pgTable('vehicles', {
   maxPassengers: integer('max_passengers').notNull(),
   classification: classificationEnum('classification').notNull(),
   thumbnailUrl: text('thumbnail_url').notNull(),
-  hourlyRateCents: integer('hourly_rate_cents').notNull(), // e.g. 4500 = $45/hr
+  dailyRateCents: integer('daily_rate_cents').notNull(), // e.g. 4500 = $45/day
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
@@ -174,7 +174,7 @@ export const addons = pgTable('addons', {
 CREATE INDEX idx_reservations_vehicle_id ON reservations (vehicle_id);
 CREATE INDEX idx_reservations_time_range ON reservations (vehicle_id, start_time, end_time);
 CREATE INDEX idx_vehicles_classification ON vehicles (classification);
-CREATE INDEX idx_vehicles_hourly_rate ON vehicles (hourly_rate_cents);
+CREATE INDEX idx_vehicles_daily_rate ON vehicles (daily_rate_cents);
 CREATE INDEX idx_vehicles_max_passengers ON vehicles (max_passengers);
 ```
 
@@ -392,7 +392,7 @@ When no date range is provided, show all vehicles with a prominent prompt to sel
 | Filter | UI Control | Query Predicate | Product Justification |
 |--------|-----------|-----------------|----------------------|
 | **Vehicle Class** | Multi-select chips (`Compact`, `SUV`, …) | `classification = ANY($classes)` | Renters decide on body type early based on trip purpose (city commute vs. family road trip), so class is the highest-signal narrowing filter after dates. |
-| **Price Range** | Dual-handle slider (min/max hourly rate) | `hourly_rate_cents BETWEEN $min AND $max` | Price anchoring drives conversion — users mentally budget per day/hour and eliminate outliers before emotionally investing in a specific car. |
+| **Price Range** | Dual-handle slider (min/max daily rate) | `daily_rate_cents BETWEEN $min AND $max` | Price anchoring drives conversion — users mentally budget per day and eliminate outliers before emotionally investing in a specific car. |
 | **Passenger Count** | Stepper (minimum seats) | `max_passengers >= $min_passengers` | Group-size fit is a hard constraint (especially for families); surfacing it prevents frustration from discovering a car can't fit everyone after picking dates. |
 | **Make** | Combobox with autocomplete | `make ILIKE $make` or `make = $make` | Brand loyalty is strong in car rental — many users start search with "I want a Toyota" because of trust, familiarity, or prior ownership. |
 
@@ -405,8 +405,8 @@ type SearchFilters = {
   startTime?: string;   // ISO 8601
   endTime?: string;
   classifications?: Classification[];
-  minHourlyRateCents?: number;
-  maxHourlyRateCents?: number;
+  minDailyRateCents?: number;
+  maxDailyRateCents?: number;
   minPassengers?: number;
   make?: string;
 };
@@ -464,12 +464,16 @@ function computeDurationHours(start: DateTime, end: DateTime): number {
   return end.diff(start, 'hours').hours;
 }
 
+function rentalDayCount(durationHours: number): number {
+  return Math.max(1, Math.ceil(durationHours / 24));
+}
+
 function computeBasePriceCents(
-  hourlyRateCents: number,
+  dailyRateCents: number,
   durationHours: number,
 ): number {
-  // Round to nearest cent after multiplication
-  return Math.round(hourlyRateCents * durationHours);
+  const durationDays = rentalDayCount(durationHours);
+  return dailyRateCents * durationDays;
 }
 ```
 
@@ -521,7 +525,7 @@ function holidayDiscountCents(basePriceCents: number): number {
 
 Qualifies when `durationHours > 72` (strictly greater than 3 days).
 
-**Duration discount amount** — $10/hr off the hourly rate, applied across all hours:
+**Duration discount amount** — $10/hr off the base rental, applied across all billable hours:
 
 ```typescript
 function durationDiscountCents(durationHours: number): number {
@@ -529,11 +533,11 @@ function durationDiscountCents(durationHours: number): number {
 }
 
 function durationDiscountedBaseCents(
-  hourlyRateCents: number,
+  dailyRateCents: number,
   durationHours: number,
 ): number {
-  const effectiveRate = hourlyRateCents - DURATION_DISCOUNT_CENTS_PER_HOUR;
-  return Math.round(Math.max(0, effectiveRate) * durationHours);
+  const basePriceCents = computeBasePriceCents(dailyRateCents, durationHours);
+  return Math.max(0, basePriceCents - durationDiscountCents(durationHours));
 }
 ```
 
@@ -546,7 +550,8 @@ type DiscountType = 'holiday' | 'duration' | 'none';
 
 type QuoteBreakdown = {
   durationHours: number;
-  hourlyRateCents: number;
+  durationDays: number;
+  dailyRateCents: number;
   basePriceCents: number;
   discountType: DiscountType;
   discountCents: number;       // positive number representing savings
@@ -554,12 +559,13 @@ type QuoteBreakdown = {
 };
 
 function calculateQuote(
-  hourlyRateCents: number,
+  dailyRateCents: number,
   start: DateTime,
   end: DateTime,
 ): QuoteBreakdown {
   const durationHours = computeDurationHours(start, end);
-  const basePriceCents = computeBasePriceCents(hourlyRateCents, durationHours);
+  const durationDays = rentalDayCount(durationHours);
+  const basePriceCents = computeBasePriceCents(dailyRateCents, durationHours);
 
   const candidates: Array<{ type: DiscountType; discountedBase: number }> = [
     { type: 'none', discountedBase: basePriceCents },
@@ -575,7 +581,7 @@ function calculateQuote(
   if (durationHours > DURATION_THRESHOLD_HOURS) {
     candidates.push({
       type: 'duration',
-      discountedBase: durationDiscountedBaseCents(hourlyRateCents, durationHours),
+      discountedBase: durationDiscountedBaseCents(dailyRateCents, durationHours),
     });
   }
 
@@ -588,7 +594,8 @@ function calculateQuote(
 
   return {
     durationHours,
-    hourlyRateCents,
+    durationDays,
+    dailyRateCents,
     basePriceCents,
     discountType: best.type,
     discountCents: basePriceCents - best.discountedBase,
@@ -694,7 +701,7 @@ type FullPriceBreakdown = QuoteBreakdown & {
 **Recalculation pipeline (runs on every add-on toggle):**
 
 ```
-1. quote = calculateQuote(hourlyRate, start, end)     // server or shared pure fn
+1. quote = calculateQuote(dailyRate, start, end)     // server or shared pure fn
 2. addOnLines = selected addons.map(computeAddOnLineItem)
 3. addOnsSubtotal = sum(addOnLines.totalCents)
 4. grandTotal = quote.discountedBaseCents + addOnsSubtotal
@@ -704,7 +711,7 @@ type FullPriceBreakdown = QuoteBreakdown & {
 
 | Line | Value |
 |------|-------|
-| Base rental ({N} hrs × ${rate}/hr) | `basePriceCents` |
+| Base rental ({N} days × ${rate}/day) | `basePriceCents` |
 | Discount (if any) | `−discountCents` (indigo text) |
 | **Subtotal after discount** | `discountedBaseCents` |
 | *Each selected add-on* | `+line.totalCents` |
@@ -787,7 +794,7 @@ State management: `useState<Set<string>>` for selected slugs; derive breakdown w
 |----------|-----------|
 | 17% of $999.99 base | `Math.round(basePriceCents * 0.17)` — always integer cents |
 | Display | `formatCents()` existing helper; show cents only when non-zero (`$45.50` not `$46`) |
-| Negative effective rate | Clamp: `Math.max(0, effectiveRate)` if hourly − $10 < 0 (extreme edge) |
+| Discount exceeds base | Clamp: `Math.max(0, basePriceCents - durationDiscountCents)` if duration discount > base (extreme edge) |
 
 ### 4.7 Input Validation
 

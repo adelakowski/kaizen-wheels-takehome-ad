@@ -1,7 +1,5 @@
-import {
-  calculateRentalPrice,
-  parseAndValidateTimeRange,
-} from "@/lib/pricing";
+import { calculateQuote } from "@/lib/discounts";
+import { parseAndValidateTimeRange } from "@/lib/pricing";
 import type { SearchFilters } from "@/lib/search-params";
 import { DEFAULT_FILTERS } from "@/lib/search-params";
 import {
@@ -71,7 +69,7 @@ async function getQuote(input: {
     );
   }
 
-  return calculateRentalPrice(start, end, vehicle.daily_rate_cents);
+  return calculateQuote(vehicle.daily_rate_cents, start, end);
 }
 
 export const API = {

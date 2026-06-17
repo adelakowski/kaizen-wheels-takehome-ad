@@ -4,8 +4,7 @@ import { useMemo } from "react";
 
 import { VehicleCard } from "@/components/search/VehicleCard";
 import { VehicleGrid, VehicleGridEmpty } from "@/components/search/VehicleGrid";
-import { calculateRentalPriceFromIso } from "@/lib/pricing";
-import { toQuoteBreakdown } from "@/lib/quote";
+import { calculateQuoteFromIso } from "@/lib/discounts";
 import {
   hasValidDateRange,
   type SearchFilters,
@@ -39,12 +38,11 @@ export function VehicleListClient({
         let quote;
         if (datesSelected && filters.startTime && filters.endTime) {
           try {
-            const raw = calculateRentalPriceFromIso(
+            quote = calculateQuoteFromIso(
               filters.startTime,
               filters.endTime,
               vehicle.daily_rate_cents,
             );
-            quote = toQuoteBreakdown(raw);
           } catch {
             quote = undefined;
           }

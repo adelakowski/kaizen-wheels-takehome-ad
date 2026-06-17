@@ -119,13 +119,34 @@ Verification
   [x] npm run ts — passes
   [x] npm run build — passes
 
-Known Part 3 limitations (by design — addressed in Parts 4–5)
-  - Quote previews on cards use client pricing; no discount badges yet (Part 4)
+Known limitations (by design — addressed in Part 5)
   - AddOnSelector still uses static app/lib/addons.ts (Part 5)
   - Location input remains UI-only
 
 ================================================================================
+PART 4: NON-STACKABLE DISCOUNT ENGINE — COMPLETE
+================================================================================
+
+Domain (app/lib/holidays.ts, app/lib/discounts.ts)
+  [x] FICTITIOUS_HOLIDAYS + RENTAL_TIMEZONE (America/Los_Angeles)
+  [x] Holiday eligibility — spans interior holiday; not pickup/dropoff on holiday
+  [x] Duration eligibility — durationHours > 72 (strict)
+  [x] Holiday discount — 17% off base (Math.round)
+  [x] Duration discount — $10/hr × durationHours off base
+  [x] calculateQuote — best price wins; tie-break holiday > duration > none
+
+Integration
+  [x] API.getQuote returns full QuoteBreakdown with discounts
+  [x] VehicleListClient — calculateQuoteFromIso for card previews + badges
+  [x] ReviewPage — server quote with discounts wired to PriceSummary
+  [x] formatDiscountLabel — "Holiday discount (−17%)" / "Long-trip discount (−$10/hr × N hrs)"
+  [x] VehicleCard — struck-through base + badge (17% off / Long-trip deal)
+
+Verification
+  [x] npm run ts — passes
+  [x] npm run build — passes
+
+================================================================================
 REMAINING PARTS
 ================================================================================
-  [ ] Part 4: Non-stackable discount engine (holiday % vs duration $/day)
   [ ] Part 5: Add-ons catalog in DB wired to checkout

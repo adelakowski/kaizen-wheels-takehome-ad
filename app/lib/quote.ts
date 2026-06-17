@@ -10,21 +10,15 @@ export type QuoteBreakdown = {
   discountedBaseCents: number;
 };
 
-export function toQuoteBreakdown(quote: {
-  totalPriceCents: number;
-  dailyRateCents: number;
-  durationInHours: number;
-  durationDays: number;
-}): QuoteBreakdown {
-  return {
-    durationHours: quote.durationInHours,
-    durationDays: quote.durationDays,
-    dailyRateCents: quote.dailyRateCents,
-    basePriceCents: quote.totalPriceCents,
-    discountType: "none",
-    discountCents: 0,
-    discountedBaseCents: quote.totalPriceCents,
-  };
+export function formatDiscountLabel(breakdown: QuoteBreakdown): string {
+  if (breakdown.discountType === "holiday") {
+    return "Holiday discount (−17%)";
+  }
+  if (breakdown.discountType === "duration") {
+    const hrs = Math.round(breakdown.durationHours);
+    return `Long-trip discount (−$10/hr × ${hrs} hrs)`;
+  }
+  return "";
 }
 
 export type AddOnLine = {

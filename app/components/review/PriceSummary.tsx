@@ -14,7 +14,7 @@ import {
 import { Separator } from "@/components/shared/ui/separator";
 import { cn } from "@/lib/classnames";
 import { formatCents } from "@/lib/formatters";
-import type { FullPriceBreakdown } from "@/lib/quote";
+import { formatDiscountLabel, type FullPriceBreakdown } from "@/lib/quote";
 
 export interface PriceSummaryProps {
   breakdown: FullPriceBreakdown;
@@ -109,11 +109,7 @@ export function PriceSummary({
 
         {breakdown.discountCents > 0 && (
           <LineItem
-            label={
-              breakdown.discountType === "holiday"
-                ? "Holiday discount"
-                : "Long-trip discount"
-            }
+            label={formatDiscountLabel(breakdown)}
             value={`−${formatCents(breakdown.discountCents)}`}
             muted
           />
