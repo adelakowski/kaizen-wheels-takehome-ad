@@ -1,0 +1,36 @@
+Kaizen Wheels — Implementation Progress
+Last updated: 2026-06-17
+
+================================================================================
+PART 1: STYLING, UX & DESIGN SYSTEM — COMPLETE
+================================================================================
+
+Brand (Kaizen Labs — https://www.kaizenlabs.co/)
+  [x] Primary green #00231C, accent lime #C3F731, white header, Inter typography
+  [x] KaizenLogo component (mountain-peak K mark, light/dark variants)
+  [x] PRD + design-system MASTER updated (SIXT → Kaizen Labs)
+
+Theme & layout
+  [x] CSS tokens in app/index.css; .kaizen-cta pill buttons
+  [x] AppShell — white header, green footer, Get started pill CTA
+  [x] SearchHero — green hero, lime eyebrow, white booking widget
+
+Search page
+  [x] FilterBar — Show cars green pill CTA
+  [x] TrustBadges — lime icon badges on hero
+  [x] VehicleGrid / VehicleCard — rounded cards, green Select pills
+
+Review page
+  [x] PriceSummary — green header sidebar, Confirm booking pill
+  [x] AddOnSelector, VehicleDetails styled to match brand
+
+Verification
+  [x] npm run ts — passes
+
+================================================================================
+REMAINING PARTS
+================================================================================
+  [ ] Part 2: PostgreSQL persistence
+  [ ] Part 3: Availability-aware search
+  [ ] Part 4: Non-stackable discount engine
+  [ ] Part 5: Add-ons catalog in DB

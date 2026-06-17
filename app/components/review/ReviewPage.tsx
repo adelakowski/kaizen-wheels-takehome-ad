@@ -1,36 +1,109 @@
 "use client";
 
-import { VehicleDetails } from "@/components/review/VehicleDetails";
-import { ErrorFallback } from "@/components/shared/ErrorFallback";
-import { Button } from "@/components/shared/ui/button";
-import { Separator } from "@/components/shared/ui/separator";
-import { formatCents } from "@/lib/formatters";
-import { API } from "@/server/api";
-import { format, formatDuration, intervalToDuration } from "date-fns";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { MiniPageLayout } from "../shared/MiniPageLayout";
 
-function Timeline({ startDate, endDate }: { startDate: Date; endDate: Date }) {
+import { AddOnSelector } from "@/components/review/AddOnSelector";
+import { PriceSummary } from "@/components/review/PriceSummary";
+import { VehicleDetails } from "@/components/review/VehicleDetails";
+import { AppShell } from "@/components/shared/AppShell";
+import { ErrorFallback } from "@/components/shared/ErrorFallback";
+import { Button } from "@/components/shared/ui/button";
+import { ADDON_CATALOG, computeAddOnLineItem } from "@/lib/addons";
+import { computeFullPriceBreakdown, toQuoteBreakdown } from "@/lib/quote";
+import { API } from "@/server/api";
+
+function ReviewWithDates({
+  vehicleId,
+  start,
+  end,
+}: {
+  vehicleId: string;
+  start: string;
+  end: string;
+}) {
+  const vehicle = API.getVehicle(vehicleId);
+  const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set());
+
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+
+  const rawQuote = API.getQuote({
+    vehicleId,
+    startTime: startDate.toISOString(),
+    endTime: endDate.toISOString(),
+  });
+
+  const quote = toQuoteBreakdown(rawQuote);
+
+  const addOnLines = useMemo(
+    () =>
+      ADDON_CATALOG.filter((addon) => selectedSlugs.has(addon.slug)).map(
+        (addon) => {
+          const line = computeAddOnLineItem(addon, quote.durationHours);
+          return {
+            slug: addon.slug,
+            label: line.label,
+            totalCents: line.totalCents,
+          };
+        },
+      ),
+    [selectedSlugs, quote.durationHours],
+  );
+
+  const breakdown = computeFullPriceBreakdown(quote, addOnLines);
+
+  const toggleAddOn = (slug: string) => {
+    setSelectedSlugs((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) {
+        next.delete(slug);
+      } else {
+        next.add(slug);
+      }
+      return next;
+    });
+  };
+
+  const handleConfirm = () => {
+    console.error("Not implemented");
+  };
+
   return (
-    <div>
-      <div>
-        <span>Pick-up</span>
-        <p>{format(startDate, "PPpp")}</p>
-      </div>
-      <div>
-        <p>Rental period</p>
-      </div>
-      <div>
-        <span>Drop-off</span>
-        <p>{format(endDate, "PPpp")}</p>
+    <div className="space-y-6">
+      <header className="space-y-2">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          Complete your booking
+        </h1>
+        <p className="text-muted-foreground">
+          Review your vehicle, add extras, and confirm — no hidden costs.
+        </p>
+      </header>
+
+      <div className="grid gap-8 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px]">
+        <div className="space-y-8">
+          <VehicleDetails vehicle={vehicle} />
+          <AddOnSelector
+            durationHours={quote.durationHours}
+            selectedSlugs={selectedSlugs}
+            onToggle={toggleAddOn}
+          />
+        </div>
+
+        <PriceSummary
+          breakdown={breakdown}
+          startDate={startDate}
+          endDate={endDate}
+          onConfirm={handleConfirm}
+        />
       </div>
     </div>
   );
 }
 
-function Content() {
+function ReviewContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const start = searchParams.get("start");
@@ -40,91 +113,52 @@ function Content() {
     throw new Error("No reservation ID found");
   }
 
-  const vehicle = API.getVehicle(id);
-
   if (!start || !end) {
+    const vehicle = API.getVehicle(id);
+
     return (
-      <div>
+      <div className="mx-auto max-w-2xl space-y-6">
+        <header className="space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            Complete your booking
+          </h1>
+          <p className="text-muted-foreground">
+            Select pick-up and return dates on the search page to see your quote.
+          </p>
+        </header>
         <VehicleDetails vehicle={vehicle} />
-        <Separator />
-        <div>
-          <h3>Reservation Summary</h3>
-          <p>Pickup and drop-off times are required to see your quote.</p>
-        </div>
+        <Button asChild variant="outline">
+          <a href="/">Back to search</a>
+        </Button>
       </div>
     );
   }
 
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-
-  const quote = API.getQuote({
-    vehicleId: id,
-    startTime: startDate.toISOString(),
-    endTime: endDate.toISOString(),
-  });
-
-  const handleConfirm = () => {
-    console.error("Not implemented");
-  };
-
-  const formattedDuration = formatDuration(
-    intervalToDuration({
-      start: startDate,
-      end: endDate,
-    }),
-    { delimiter: ", " },
-  );
-
-  return (
-    <div>
-      <VehicleDetails vehicle={vehicle} />
-
-      <Separator />
-
-      <div>
-        <h3>Reservation Summary</h3>
-        <div>
-          <dl>
-            <div>
-              <dt>Hourly Rate</dt>
-              <dd>
-                <span>{formatCents(vehicle.hourly_rate_cents)}</span>
-                <span>/hr</span>
-              </dd>
-            </div>
-            <div>
-              <dt>Duration</dt>
-              <dd>{formattedDuration}</dd>
-            </div>
-            <div>
-              <dt>Total Cost</dt>
-              <dd>{formatCents(quote.totalPriceCents)}</dd>
-            </div>
-          </dl>
-
-          <Timeline startDate={startDate} endDate={endDate} />
-        </div>
-
-        <Button onClick={handleConfirm}>Confirm reservation</Button>
-      </div>
-    </div>
-  );
+  return <ReviewWithDates vehicleId={id} start={start} end={end} />;
 }
 
 export function ReviewPage() {
   return (
-    <MiniPageLayout
-      title="Almost there"
-      subtitle="Your adventure is about to begin! Please confirm your reservation below."
-    >
+    <AppShell>
       <ErrorBoundary
         fallback={<ErrorFallback message="Failed to load reservation" />}
       >
-        <Suspense fallback={null}>
-          <Content />
+        <Suspense fallback={<ReviewPageFallback />}>
+          <ReviewContent />
         </Suspense>
       </ErrorBoundary>
-    </MiniPageLayout>
+    </AppShell>
+  );
+}
+
+function ReviewPageFallback() {
+  return (
+    <div className="space-y-6">
+      <div className="h-10 w-64 animate-pulse rounded-lg bg-muted" />
+      <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
+        <div className="h-96 animate-pulse rounded-xl bg-muted" />
+        <div className="h-80 animate-pulse rounded-xl bg-muted" />
+      </div>
+    </div>
   );
 }

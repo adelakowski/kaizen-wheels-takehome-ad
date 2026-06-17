@@ -4,6 +4,9 @@ export default {
   content: ["./index.html", "./app/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
@@ -43,6 +46,14 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        header: {
+          DEFAULT: "hsl(var(--header))",
+          foreground: "hsl(var(--header-foreground))",
+        },
+        hero: "hsl(var(--hero))",
+        brand: {
+          lime: "hsl(var(--brand-lime))",
+        },
         chart: {
           1: "hsl(var(--chart-1))",
           2: "hsl(var(--chart-2))",
