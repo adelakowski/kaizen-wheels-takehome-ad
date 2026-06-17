@@ -1,37 +1,43 @@
 "use client";
 
 import { useMemo } from "react";
-import { useSearchParams } from "next/navigation";
 
 import { VehicleCard } from "@/components/search/VehicleCard";
 import { VehicleGrid, VehicleGridEmpty } from "@/components/search/VehicleGrid";
-import { filterVehicles } from "@/lib/filters";
 import { calculateRentalPriceFromIso } from "@/lib/pricing";
 import { toQuoteBreakdown } from "@/lib/quote";
-import { parseSearchFilters } from "@/lib/search-params";
+import {
+  hasValidDateRange,
+  type SearchFilters,
+} from "@/lib/search-params";
 import type { Vehicle } from "@/server/data";
 
-export function VehicleListClient({ vehicles }: { vehicles: Vehicle[] }) {
-  const searchParams = useSearchParams();
-  const filters = useMemo(
-    () => parseSearchFilters(searchParams),
-    [searchParams],
-  );
+export function VehicleListClient({
+  vehicles,
+  filters,
+}: {
+  vehicles: Vehicle[];
+  filters: SearchFilters;
+}) {
+  const datesSelected = useMemo(() => hasValidDateRange(filters), [filters]);
 
-  const filteredVehicles = useMemo(
-    () => filterVehicles(vehicles, filters),
-    [vehicles, filters],
-  );
-
-  if (filteredVehicles.length === 0) {
-    return <VehicleGridEmpty />;
+  if (vehicles.length === 0) {
+    return (
+      <VehicleGridEmpty
+        datesSelected={datesSelected}
+        filtersActive={hasActiveFilters(filters)}
+      />
+    );
   }
 
   return (
-    <VehicleGrid count={filteredVehicles.length}>
-      {filteredVehicles.map((vehicle) => {
+    <VehicleGrid
+      count={vehicles.length}
+      datesSelected={datesSelected}
+    >
+      {vehicles.map((vehicle) => {
         let quote;
-        if (filters.startTime && filters.endTime) {
+        if (datesSelected && filters.startTime && filters.endTime) {
           try {
             const raw = calculateRentalPriceFromIso(
               filters.startTime,
@@ -56,4 +62,17 @@ export function VehicleListClient({ vehicles }: { vehicles: Vehicle[] }) {
       })}
     </VehicleGrid>
   );
+}
+
+function hasActiveFilters(filters: SearchFilters): boolean {
+  return (
+    filters.classifications.length > 0 ||
+    filters.minPassengers > 1 ||
+    Boolean(filters.make.trim()) ||
+    datesSelected(filters)
+  );
+}
+
+function datesSelected(filters: SearchFilters): boolean {
+  return hasValidDateRange(filters);
 }

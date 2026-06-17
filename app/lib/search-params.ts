@@ -91,3 +91,22 @@ export function hasValidDateRange(filters: SearchFilters): boolean {
   const end = new Date(filters.endTime);
   return !Number.isNaN(start.getTime()) && end > start;
 }
+
+export function searchParamsToURLSearchParams(
+  params: Record<string, string | string[] | undefined>,
+): URLSearchParams {
+  const urlParams = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined) continue;
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        urlParams.append(key, item);
+      }
+    } else {
+      urlParams.set(key, value);
+    }
+  }
+
+  return urlParams;
+}

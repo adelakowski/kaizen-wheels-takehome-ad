@@ -25,9 +25,9 @@ Search page (SIXT-style sticky booking bar)
   [x] FilterBar — secondary row: driver age, corporate rate, collapsible More filters
   [x] FilterBar — aligned label/input row; + Different return location in label row
   [x] FilterBar — mobile bottom sheet; Clear all removed to shorten menu height
-  [x] URL sync for dates/filters via app/lib/search-params.ts + app/lib/filters.ts
+  [x] URL sync for dates/filters via app/lib/search-params.ts
   [x] TrustBadges — lime icon badges on hero
-  [x] VehicleGrid / VehicleCard — rounded cards, green Select pill CTAs
+  [x] VehicleGrid / VehicleCard — rounded cards, green Select pill CTAs; rates per day
 
 Review page
   [x] ReviewPage — two-column layout
@@ -56,10 +56,10 @@ Infrastructure
   [x] npm scripts: db:generate, db:migrate, db:seed, db:setup
 
 Schema (app/server/db/schema.ts)
-  [x] vehicles — UUID PK, classification enum, hourly_rate_cents (integer)
+  [x] vehicles — UUID PK, classification enum, daily_rate_cents (stored as hourly_rate_cents column)
   [x] reservations — FK to vehicles, timestamptz, price/discount columns
   [x] addons — catalog table (slug, pricing_model enum, price_cents)
-  [x] Indexes on classification, hourly rate, passengers, reservation time range
+  [x] Indexes on classification, daily rate, passengers, reservation time range
 
 Data layer
   [x] app/server/db/index.ts — Drizzle + postgres.js singleton
@@ -74,23 +74,58 @@ Seed (scripts/seed.ts)
   [x] 5 add-on catalog rows
 
 UI integration
-  [x] VehicleListLoader (server) + VehicleListClient (client filters/quotes)
+  [x] VehicleListLoader (server) + VehicleListClient (client quote previews)
   [x] ReviewPage — server-fetched vehicle + quote; ReviewWithDatesClient for interactivity
-  [x] app/lib/pricing.ts — shared rental price math (client quote previews)
+  [x] app/lib/pricing.ts — shared rental price math (per-day rates)
 
 Verification
   [x] npm run ts — passes
   [x] npm run db:setup — migrate + seed
 
-Known Part 2 limitations (by design — addressed in Parts 3–5)
-  - searchVehicles returns all vehicles; availability filtering is Part 3
-  - Client-side filterVehicles still applied in VehicleListClient
-  - AddOnSelector still uses static app/lib/addons.ts (Part 5 wires DB catalog)
-  - Discount engine not yet applied to quotes (Part 4)
+================================================================================
+PART 3: AVAILABILITY-AWARE SEARCH & FILTERS — COMPLETE
+================================================================================
+
+Server-side search (app/server/repositories/vehicles.ts)
+  [x] NOT EXISTS overlap query when dates set:
+      start < requested_end AND end > requested_start
+  [x] Classification multi-select — inArray(classification)
+  [x] Daily price range — BETWEEN min/max daily_rate_cents
+  [x] Min passengers — max_passengers >= N
+  [x] Make — ILIKE partial match
+  [x] isVehicleAvailable() for getQuote conflict check
+
+API & data flow
+  [x] API.searchVehicles(filters) accepts SearchFilters from URL params
+  [x] page.tsx passes searchParams → SearchPage → VehicleListLoader
+  [x] Suspense key on filter string re-fetches fleet on Show cars / URL change
+  [x] Removed client-side app/lib/filters.ts (all filtering in Postgres)
+
+Filter rationale (PRD §3.2)
+  - Dates + availability: hard constraint — unavailable cars never shown when dates set
+  - Class: highest-signal body-type filter after dates (trip purpose)
+  - Daily price: budget anchoring before emotional investment in a car
+  - Passengers: hard fit constraint for families/groups
+  - Make: brand loyalty / familiarity entry point
+
+UX (PRD §3.4)
+  [x] No dates → full fleet shown; lime prompt to select dates + Show cars
+  [x] Dates set → unavailable vehicles excluded; count says "vehicles available"
+  [x] No dates → count says "vehicles in fleet"; Select disabled until dates set (VehicleCard)
+  [x] Contextual empty states (no availability vs no filter matches)
+  [x] Review getQuote rejects CONFLICT if vehicle booked for window
+
+Verification
+  [x] npm run ts — passes
+  [x] npm run build — passes
+
+Known Part 3 limitations (by design — addressed in Parts 4–5)
+  - Quote previews on cards use client pricing; no discount badges yet (Part 4)
+  - AddOnSelector still uses static app/lib/addons.ts (Part 5)
+  - Location input remains UI-only
 
 ================================================================================
 REMAINING PARTS
 ================================================================================
-  [ ] Part 3: Availability-aware search (overlap SQL + server-side filters)
-  [ ] Part 4: Non-stackable discount engine (holiday % vs duration $/hr)
+  [ ] Part 4: Non-stackable discount engine (holiday % vs duration $/day)
   [ ] Part 5: Add-ons catalog in DB wired to checkout

@@ -1,6 +1,11 @@
+import type { SearchFilters } from "@/lib/search-params";
+import { DEFAULT_FILTERS } from "@/lib/search-params";
 import type { Reservation, Vehicle } from "./data";
 import { findReservationById } from "./repositories/reservations";
-import { findVehicleById, listVehicles } from "./repositories/vehicles";
+import {
+  findVehicleById,
+  searchVehicles as searchVehiclesRepo,
+} from "./repositories/vehicles";
 
 export async function getVehicleById(
   id: string,
@@ -17,5 +22,11 @@ export async function getReservationById(
 }
 
 export async function getVehicles(): Promise<Vehicle[]> {
-  return listVehicles();
+  return searchVehiclesRepo(DEFAULT_FILTERS);
+}
+
+export async function searchVehicles(
+  filters: SearchFilters,
+): Promise<Vehicle[]> {
+  return searchVehiclesRepo(filters);
 }

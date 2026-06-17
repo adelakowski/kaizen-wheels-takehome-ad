@@ -1,13 +1,15 @@
 import {
   calculateRentalPrice,
-  calculateRentalPriceFromIso,
   parseAndValidateTimeRange,
 } from "@/lib/pricing";
+import type { SearchFilters } from "@/lib/search-params";
+import { DEFAULT_FILTERS } from "@/lib/search-params";
 import {
   getReservationById,
   getVehicleById,
-  getVehicles,
+  searchVehicles as searchVehiclesQuery,
 } from "./data_helpers";
+import { isVehicleAvailable } from "./repositories/vehicles";
 
 async function validateReservationAndGetVehicle(input: {
   vehicleId: string;
@@ -26,9 +28,9 @@ async function validateReservationAndGetVehicle(input: {
   return { vehicle, start, end };
 }
 
-async function searchVehicles() {
+async function searchVehicles(filters: SearchFilters = DEFAULT_FILTERS) {
   return {
-    vehicles: await getVehicles(),
+    vehicles: await searchVehiclesQuery(filters),
   };
 }
 
@@ -56,6 +58,19 @@ async function getQuote(input: {
   endTime: string;
 }) {
   const { vehicle, start, end } = await validateReservationAndGetVehicle(input);
+
+  const available = await isVehicleAvailable(
+    vehicle.id,
+    start.toJSDate(),
+    end.toJSDate(),
+  );
+
+  if (!available) {
+    throw new Error(
+      "CONFLICT: Vehicle is not available for the selected dates",
+    );
+  }
+
   return calculateRentalPrice(start, end, vehicle.daily_rate_cents);
 }
 
@@ -65,5 +80,3 @@ export const API = {
   getReservation,
   getQuote,
 };
-
-export { calculateRentalPriceFromIso };
