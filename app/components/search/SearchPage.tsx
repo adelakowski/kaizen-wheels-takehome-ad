@@ -1,13 +1,10 @@
-"use client";
-
 import { Suspense } from "react";
-import { ErrorBoundary } from "react-error-boundary";
 
 import { FilterBar, FilterBarFallback } from "@/components/search/FilterBar";
-import { VehicleList } from "@/components/search/VehicleList";
+import { VehicleFleetBoundary } from "@/components/search/VehicleFleetBoundary";
+import { VehicleListLoader } from "@/components/search/VehicleListLoader";
 import { SearchHero } from "@/components/search/SearchHero";
 import { AppShell } from "@/components/shared/AppShell";
-import { ErrorFallback } from "@/components/shared/ErrorFallback";
 
 export function SearchPage() {
   return (
@@ -28,13 +25,11 @@ export function SearchPage() {
         </p>
       </div>
 
-      <ErrorBoundary
-        fallback={<ErrorFallback message="Failed to load vehicles" />}
-      >
+      <VehicleFleetBoundary>
         <Suspense fallback={<VehicleListFallback />}>
-          <VehicleList />
+          <VehicleListLoader />
         </Suspense>
-      </ErrorBoundary>
+      </VehicleFleetBoundary>
     </AppShell>
   );
 }

@@ -2,7 +2,8 @@ export type DiscountType = "holiday" | "duration" | "none";
 
 export type QuoteBreakdown = {
   durationHours: number;
-  hourlyRateCents: number;
+  durationDays: number;
+  dailyRateCents: number;
   basePriceCents: number;
   discountType: DiscountType;
   discountCents: number;
@@ -11,12 +12,14 @@ export type QuoteBreakdown = {
 
 export function toQuoteBreakdown(quote: {
   totalPriceCents: number;
-  hourlyRateCents: number;
+  dailyRateCents: number;
   durationInHours: number;
+  durationDays: number;
 }): QuoteBreakdown {
   return {
     durationHours: quote.durationInHours,
-    hourlyRateCents: quote.hourlyRateCents,
+    durationDays: quote.durationDays,
+    dailyRateCents: quote.dailyRateCents,
     basePriceCents: quote.totalPriceCents,
     discountType: "none",
     discountCents: 0,

@@ -260,23 +260,23 @@ function AdvancedFilters({
       <div className="space-y-2 sm:col-span-2 lg:col-span-4">
         <div className="flex items-center justify-between">
           <Label className="text-xs font-semibold text-muted-foreground">
-            Hourly rate
+            Daily rate
           </Label>
           <span className="text-xs tabular-nums text-muted-foreground">
-            {formatCents(draft.minHourlyRateCents)} –{" "}
-            {formatCents(draft.maxHourlyRateCents)}
+            {formatCents(draft.minDailyRateCents)} –{" "}
+            {formatCents(draft.maxDailyRateCents)}
           </span>
         </div>
         <RangeSlider
           min={DEFAULT_MIN_RATE_CENTS}
           max={DEFAULT_MAX_RATE_CENTS}
           step={100}
-          value={[draft.minHourlyRateCents, draft.maxHourlyRateCents]}
+          value={[draft.minDailyRateCents, draft.maxDailyRateCents]}
           onValueChange={([min, max]) =>
             onChange({
               ...draft,
-              minHourlyRateCents: min,
-              maxHourlyRateCents: max,
+              minDailyRateCents: min,
+              maxDailyRateCents: max,
             })
           }
         />

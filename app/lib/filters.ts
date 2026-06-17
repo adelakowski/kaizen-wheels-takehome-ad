@@ -13,11 +13,11 @@ export function filterVehicles(
       return false;
     }
 
-    if (vehicle.hourly_rate_cents < filters.minHourlyRateCents) {
+    if (vehicle.daily_rate_cents < filters.minDailyRateCents) {
       return false;
     }
 
-    if (vehicle.hourly_rate_cents > filters.maxHourlyRateCents) {
+    if (vehicle.daily_rate_cents > filters.maxDailyRateCents) {
       return false;
     }
 

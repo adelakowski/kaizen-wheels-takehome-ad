@@ -65,10 +65,10 @@ export function PriceSummary({
   onConfirm,
   className,
 }: PriceSummaryProps) {
-  const hoursLabel =
-    breakdown.durationHours === 1
-      ? "1 hr"
-      : `${breakdown.durationHours.toFixed(1)} hrs`;
+  const daysLabel =
+    breakdown.durationDays === 1
+      ? "1 day"
+      : `${breakdown.durationDays} days`;
 
   return (
     <Card
@@ -103,7 +103,7 @@ export function PriceSummary({
 
       <CardContent className="space-y-3 p-6">
         <LineItem
-          label={`Base rental (${hoursLabel})`}
+          label={`Base rental (${daysLabel})`}
           value={formatCents(breakdown.basePriceCents)}
         />
 

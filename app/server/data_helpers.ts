@@ -1,13 +1,21 @@
-import { Reservation, RESERVATIONS, Vehicle, VEHICLES } from "./data";
+import type { Reservation, Vehicle } from "./data";
+import { findReservationById } from "./repositories/reservations";
+import { findVehicleById, listVehicles } from "./repositories/vehicles";
 
-export const getVehicleById = (id: string): Vehicle | undefined => {
-  return VEHICLES.find((car) => car.id === id);
-};
+export async function getVehicleById(
+  id: string,
+): Promise<Vehicle | undefined> {
+  const vehicle = await findVehicleById(id);
+  return vehicle ?? undefined;
+}
 
-export const getReservationById = (id: string): Reservation | undefined => {
-  return RESERVATIONS.find((reservation) => reservation.id === id);
-};
+export async function getReservationById(
+  id: string,
+): Promise<Reservation | undefined> {
+  const reservation = await findReservationById(id);
+  return reservation ?? undefined;
+}
 
-export const getVehicles = () => {
-  return VEHICLES;
-};
+export async function getVehicles(): Promise<Vehicle[]> {
+  return listVehicles();
+}

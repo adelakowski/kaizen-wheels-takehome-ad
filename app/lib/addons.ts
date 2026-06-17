@@ -1,5 +1,7 @@
 export type PricingModel = "per_rental" | "per_day";
 
+import { rentalDayCount } from "@/lib/pricing";
+
 export type AddOnCatalogItem = {
   id: string;
   slug: string;
@@ -51,10 +53,6 @@ export const ADDON_CATALOG: AddOnCatalogItem[] = [
     priceCents: 400,
   },
 ];
-
-export function rentalDayCount(durationHours: number): number {
-  return Math.max(1, Math.ceil(durationHours / 24));
-}
 
 export function computeAddOnLineItem(
   addon: AddOnCatalogItem,

@@ -6,38 +6,38 @@ import { useSearchParams } from "next/navigation";
 import { VehicleCard } from "@/components/search/VehicleCard";
 import { VehicleGrid, VehicleGridEmpty } from "@/components/search/VehicleGrid";
 import { filterVehicles } from "@/lib/filters";
-import { parseSearchFilters } from "@/lib/search-params";
+import { calculateRentalPriceFromIso } from "@/lib/pricing";
 import { toQuoteBreakdown } from "@/lib/quote";
-import { API } from "@/server/api";
+import { parseSearchFilters } from "@/lib/search-params";
+import type { Vehicle } from "@/server/data";
 
-export function VehicleList() {
+export function VehicleListClient({ vehicles }: { vehicles: Vehicle[] }) {
   const searchParams = useSearchParams();
   const filters = useMemo(
     () => parseSearchFilters(searchParams),
     [searchParams],
   );
 
-  const searchResponse = API.searchVehicles();
-  const vehicles = useMemo(
-    () => filterVehicles(searchResponse.vehicles, filters),
-    [searchResponse.vehicles, filters],
+  const filteredVehicles = useMemo(
+    () => filterVehicles(vehicles, filters),
+    [vehicles, filters],
   );
 
-  if (vehicles.length === 0) {
+  if (filteredVehicles.length === 0) {
     return <VehicleGridEmpty />;
   }
 
   return (
-    <VehicleGrid count={vehicles.length}>
-      {vehicles.map((vehicle) => {
+    <VehicleGrid count={filteredVehicles.length}>
+      {filteredVehicles.map((vehicle) => {
         let quote;
         if (filters.startTime && filters.endTime) {
           try {
-            const raw = API.getQuote({
-              vehicleId: vehicle.id,
-              startTime: filters.startTime,
-              endTime: filters.endTime,
-            });
+            const raw = calculateRentalPriceFromIso(
+              filters.startTime,
+              filters.endTime,
+              vehicle.daily_rate_cents,
+            );
             quote = toQuoteBreakdown(raw);
           } catch {
             quote = undefined;

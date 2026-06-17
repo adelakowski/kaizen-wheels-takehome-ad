@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/shared/ui/button";
 
 export function ErrorFallback({ message }: { message: React.ReactNode }) {

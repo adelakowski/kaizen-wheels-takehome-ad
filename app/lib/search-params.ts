@@ -4,8 +4,8 @@ export type SearchFilters = {
   startTime?: string;
   endTime?: string;
   classifications: Classification[];
-  minHourlyRateCents: number;
-  maxHourlyRateCents: number;
+  minDailyRateCents: number;
+  maxDailyRateCents: number;
   minPassengers: number;
   make: string;
 };
@@ -15,8 +15,8 @@ export const DEFAULT_MAX_RATE_CENTS = 22000;
 
 export const DEFAULT_FILTERS: SearchFilters = {
   classifications: [],
-  minHourlyRateCents: DEFAULT_MIN_RATE_CENTS,
-  maxHourlyRateCents: DEFAULT_MAX_RATE_CENTS,
+  minDailyRateCents: DEFAULT_MIN_RATE_CENTS,
+  maxDailyRateCents: DEFAULT_MAX_RATE_CENTS,
   minPassengers: 1,
   make: "",
 };
@@ -50,10 +50,10 @@ export function parseSearchFilters(
     startTime: params.get("start") ?? undefined,
     endTime: params.get("end") ?? undefined,
     classifications,
-    minHourlyRateCents: minPrice
+    minDailyRateCents: minPrice
       ? Number.parseInt(minPrice, 10)
       : DEFAULT_MIN_RATE_CENTS,
-    maxHourlyRateCents: maxPrice
+    maxDailyRateCents: maxPrice
       ? Number.parseInt(maxPrice, 10)
       : DEFAULT_MAX_RATE_CENTS,
     minPassengers: passengers ? Number.parseInt(passengers, 10) : 1,
@@ -71,11 +71,11 @@ export function buildSearchParams(
   if (filters.classifications.length > 0) {
     params.set("class", filters.classifications.join(","));
   }
-  if (filters.minHourlyRateCents !== DEFAULT_MIN_RATE_CENTS) {
-    params.set("minPrice", String(filters.minHourlyRateCents));
+  if (filters.minDailyRateCents !== DEFAULT_MIN_RATE_CENTS) {
+    params.set("minPrice", String(filters.minDailyRateCents));
   }
-  if (filters.maxHourlyRateCents !== DEFAULT_MAX_RATE_CENTS) {
-    params.set("maxPrice", String(filters.maxHourlyRateCents));
+  if (filters.maxDailyRateCents !== DEFAULT_MAX_RATE_CENTS) {
+    params.set("maxPrice", String(filters.maxDailyRateCents));
   }
   if (filters.minPassengers > 1) {
     params.set("passengers", String(filters.minPassengers));

@@ -45,16 +45,52 @@ UX checklist (Part 1 pre-delivery)
 Verification
   [x] npm run ts — passes
 
-Known Part 1 limitations (by design — addressed in Parts 2–5)
-  - Location input is UI-only (not persisted or used in search)
-  - Filters apply client-side against in-memory seed data
-  - Add-ons catalog is static (app/lib/addons.ts), not DB-backed
-  - Discount badges on cards are display-only until Part 4
+================================================================================
+PART 2: PERSISTENCE & SCHEMA — COMPLETE
+================================================================================
+
+Infrastructure
+  [x] docker-compose.yml — Postgres 16 (kaizen/kaizen@localhost:5432/kaizen_wheels)
+  [x] .env.example — DATABASE_URL, TZ, NEXT_PUBLIC_APP_URL
+  [x] drizzle.config.ts + drizzle/ migrations
+  [x] npm scripts: db:generate, db:migrate, db:seed, db:setup
+
+Schema (app/server/db/schema.ts)
+  [x] vehicles — UUID PK, classification enum, hourly_rate_cents (integer)
+  [x] reservations — FK to vehicles, timestamptz, price/discount columns
+  [x] addons — catalog table (slug, pricing_model enum, price_cents)
+  [x] Indexes on classification, hourly rate, passengers, reservation time range
+
+Data layer
+  [x] app/server/db/index.ts — Drizzle + postgres.js singleton
+  [x] repositories/vehicles.ts, reservations.ts, addons.ts + mappers
+  [x] data_helpers.ts — async wrappers over repositories
+  [x] API.searchVehicles / getVehicle / getReservation / getQuote — async Postgres
+  [x] In-memory VEHICLES/RESERVATIONS removed from data.ts (types only)
+
+Seed (scripts/seed.ts)
+  [x] 12 vehicles with stable UUIDs (app/server/seed/fixtures.ts)
+  [x] 9 reservations — Luxon offsets from rental-TZ start of today → UTC
+  [x] 5 add-on catalog rows
+
+UI integration
+  [x] VehicleListLoader (server) + VehicleListClient (client filters/quotes)
+  [x] ReviewPage — server-fetched vehicle + quote; ReviewWithDatesClient for interactivity
+  [x] app/lib/pricing.ts — shared rental price math (client quote previews)
+
+Verification
+  [x] npm run ts — passes
+  [x] npm run db:setup — migrate + seed
+
+Known Part 2 limitations (by design — addressed in Parts 3–5)
+  - searchVehicles returns all vehicles; availability filtering is Part 3
+  - Client-side filterVehicles still applied in VehicleListClient
+  - AddOnSelector still uses static app/lib/addons.ts (Part 5 wires DB catalog)
+  - Discount engine not yet applied to quotes (Part 4)
 
 ================================================================================
 REMAINING PARTS
 ================================================================================
-  [ ] Part 2: PostgreSQL persistence (Drizzle schema, migrations, seed)
   [ ] Part 3: Availability-aware search (overlap SQL + server-side filters)
   [ ] Part 4: Non-stackable discount engine (holiday % vs duration $/hr)
   [ ] Part 5: Add-ons catalog in DB wired to checkout

@@ -106,8 +106,8 @@ export function VehicleCard({
             From
           </p>
           <p className="text-xl font-black tabular-nums">
-            {formatCents(vehicle.hourly_rate_cents)}
-            <span className="text-sm font-normal text-muted-foreground">/hr</span>
+            {formatCents(vehicle.daily_rate_cents)}
+            <span className="text-sm font-normal text-muted-foreground">/day</span>
           </p>
           {quote && datesSelected && (
             <p className="mt-0.5 text-sm font-semibold tabular-nums text-accent-foreground">

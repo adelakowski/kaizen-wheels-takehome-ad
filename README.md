@@ -1,28 +1,115 @@
 <img src="public/logo.svg" alt="Kaizen Logo" width="64" style="background: #666; padding: 0.25rem; border-radius: 100%; margin-bottom: 1rem;" />
 
+# Kaizen Wheels
+
+Premium car rental take-home — Next.js 16, Postgres, Drizzle ORM.
+
+## Prerequisites
+
+- **Node.js** 20+ and npm
+- **Docker** (for local Postgres)
+
+## Local setup
+
+1. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+2. **Environment variables**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   | Variable | Default | Purpose |
+   |----------|---------|---------|
+   | `DATABASE_URL` | `postgresql://kaizen:kaizen@localhost:5432/kaizen_wheels` | Postgres connection |
+   | `TZ` | `America/Los_Angeles` | Canonical rental timezone |
+   | `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | App base URL |
+
+3. **Start Postgres**
+
+   ```bash
+   docker compose up -d
+   ```
+
+4. **Run migrations and seed**
+
+   ```bash
+   npm run db:setup
+   ```
+
+   Or step by step:
+
+   ```bash
+   npm run db:migrate   # apply drizzle migrations
+   npm run db:seed      # load vehicles, reservations, add-on catalog
+   ```
+
+5. **Start the dev server**
+
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000).
+
+## Database commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run db:generate` | Generate SQL migrations from `app/server/db/schema.ts` |
+| `npm run db:migrate` | Apply pending migrations |
+| `npm run db:seed` | Truncate and re-seed vehicles, reservations, add-ons |
+| `npm run db:setup` | `db:migrate` + `db:seed` |
+
+## Project structure
+
+```
+app/server/db/          Drizzle schema + client
+app/server/repositories/  Postgres query layer
+app/server/seed/        Seed fixtures (stable UUIDs)
+scripts/seed.ts         Migration seed runner
+drizzle/                Generated SQL migrations
+```
+
+## Type checking
+
+```bash
+npm run ts
+```
+
+---
+
 ## Project requirements
 
-This is Kaizen Wheels: the start of a car rental app. The design is unfinished, there's no filtering, and all data lives in memory. You will harden it across five areas. Parts 1 and 2 are cross-cutting concerns that touch the whole app; Parts 3, 4, and 5 are functional features.
+This is Kaizen Wheels: a car rental app hardened across five areas.
 
-### **Part 1: Styling**
+### **Part 1: Styling** — complete
 
-The app currently ships with no visual design. Add styling you'd be comfortable shipping to real users.
+Kaizen Labs brand (forest green + lime accent), SIXT-style sticky booking bar, fleet grid, checkout UI.
 
-Tailwind is configured and the shadcn/ui primitives in `app/components/shared/ui/` are available. Use them, swap them out, or bring your own approach — the choice is yours, but be ready to justify it.
+### **Part 2: Persistence** — complete
 
-### **Part 2: Persistence**
-
-Today, vehicles and reservations live in memory in `app/server/data.ts`. Move them to a real database. We recommend Postgres, but you can pick any persistence layer you prefer.
-
-You're responsible for:
-
-- Schema design for vehicles and reservations.
-- Migrations.
-- Seed data (you can start from the existing in-memory data in `app/server/data.ts`).
-- Connection setup.
-- Clear documentation explaining how to run the project locally — prerequisites, environment variables, and commands — so we can pull it down and get it working without guessing.
+Vehicles, reservations, and add-on catalog live in **PostgreSQL 16** via **Drizzle ORM**. See setup above.
 
 ### **Part 3: Filters**
+
+Date/time availability filtering plus class, price, passengers, and make.
+
+### **Part 4: Discounts**
+
+Holiday (17%) vs duration ($10/hr after 3 days) — non-stackable, best price wins.
+
+### **Part 5: Optional add-ons**
+
+Review-page add-on selection with live line-item breakdown.
+
+See the original take-home brief below for full requirements on Parts 3–5.
+
+### **Part 3: Filters** (requirements)
 
 There are no filters in the app today. Add filtering so a user can find a vehicle for their trip. At minimum, support:
 
@@ -31,7 +118,7 @@ There are no filters in the app today. Add filtering so a user can find a vehicl
 
 Briefly justify which filters you chose and why.
 
-### **Part 4: Discounts**
+### **Part 4: Discounts** (requirements)
 
 We'd like to add discounts that satisfy these requirements:
 
@@ -39,7 +126,6 @@ We'd like to add discounts that satisfy these requirements:
 - A reservation for more than 3 days should receive a $10/hr discount on the hourly rate.
 - These discounts cannot both apply at the same time. If they conflict, the discount with the best price applies to the reservation.
 - Visitors should see the discount reflected during search and checkout, including on the review page.
-
 
 List of fictitious holidays (10 randomly sampled dates in the year):
 
@@ -54,7 +140,7 @@ List of fictitious holidays (10 randomly sampled dates in the year):
 - Nov 05
 - Dec 18
 
-### **Part 5: Optional add-ons**
+### **Part 5: Optional add-ons** (requirements)
 
 Real rental flows let customers add extras at checkout (GPS, child seats, insurance, etc.). Add support for selecting optional add-ons on the review page and reflecting them in the price.
 
@@ -66,8 +152,6 @@ Requirements:
 - Discounts from Part 4 apply to the base rental rate only, not to add-ons.
 - Selections do not need to persist beyond the review page session.
 
-Define a data shape that supports the add-ons below and would extend cleanly to new ones in the future.
-
 Available add-ons:
 
 | Name | Description | Price |
@@ -77,5 +161,3 @@ Available add-ons:
 | Additional driver | Allow a second registered driver | $12 per day |
 | Pre-paid fuel | Return the car empty | $40 per rental |
 | Roadside assistance | 24/7 emergency support | $4 per day |
-
-UI and implementation details are up to you. In your submission, briefly justify the data model you chose and the UI/UX decisions you made — what tradeoffs you considered, what you'd build differently with more time, and anything you intentionally left out.
