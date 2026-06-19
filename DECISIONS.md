@@ -136,9 +136,12 @@ These aren't add-on-specific but shaped the checkout experience:
 |-------|--------|-------------|-----------|
 | Rental timezone | Fixed `America/Los_Angeles` | User-local TZ | Single canonical zone for fictitious holiday date checks; documented in code |
 | Duration discount threshold | Strict `> 72` hours | `>= 72` | Matches "more than 3 days" in the brief |
+| Duration discount amount | $10/day × billable days | $10/hr × rental hours | Aligns with daily vehicle rates and base pricing model |
 | Discount tie-break | Prefer holiday when amounts equal | Prefer duration | Holiday is rarer; immaterial when amounts differ |
 | Availability filtering | Server-side Postgres | Client-side filter | Correctness and performance as fleet grows |
 | Pricing functions | Shared pure functions in `app/lib/` | Server-only | Same math on search cards (client preview) and review page (server quote) |
+| Vehicle rates | Daily (`daily_rate_cents`, UI shows `/day`) | Hourly | Matches rental industry norms; base = daily rate × billable days |
+| Duration discount | $10/day × billable days off base | $10/hr × rental hours | Keeps discount units aligned with daily vehicle pricing |
 
 ---
 
@@ -147,4 +150,4 @@ These aren't add-on-specific but shaped the checkout experience:
 1. **Implement confirm** — transaction with availability re-check + optional `reservation_addons` snapshot.
 2. **Add `per_hour` pricing model** — if product needs it; enum + calculator extension only.
 3. **Catalog admin** — soft-disable and reorder already supported in schema; needs a UI.
-4. **Unit tests** — `computeAddOnLineItem`, `calculateQuote`, and overlap availability are high-value pure-function targets.
+4. **Unit tests** — `npm run test:coverage` enforces 100% coverage on `app/lib/` (pricing, discounts, add-ons, filters, availability).

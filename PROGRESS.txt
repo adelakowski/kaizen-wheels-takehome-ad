@@ -44,6 +44,7 @@ UX checklist (Part 1 pre-delivery)
 
 Verification
   [x] npm run ts — passes
+  [x] npm run test:coverage — 64 tests, 100% coverage on app/lib/
 
 ================================================================================
 PART 2: PERSISTENCE & SCHEMA — COMPLETE
@@ -131,19 +132,20 @@ Domain (app/lib/holidays.ts, app/lib/discounts.ts)
   [x] Holiday eligibility — spans interior holiday; not pickup/dropoff on holiday
   [x] Duration eligibility — durationHours > 72 (strict)
   [x] Holiday discount — 17% off base (Math.round)
-  [x] Duration discount — $10/hr × durationHours off base
+  [x] Duration discount — $10/day × billable days off daily-rate base
   [x] calculateQuote — best price wins; tie-break holiday > duration > none
 
 Integration
   [x] API.getQuote returns full QuoteBreakdown with discounts
   [x] VehicleListClient — calculateQuoteFromIso for card previews + badges
   [x] ReviewPage — server quote with discounts wired to PriceSummary
-  [x] formatDiscountLabel — "Holiday discount (−17%)" / "Long-trip discount (−$10/hr × N hrs)"
+  [x] formatDiscountLabel — "Holiday discount (−17%)" / "Long-trip discount (−$10/day × N days)"
   [x] VehicleCard — struck-through base + badge (17% off / Long-trip deal)
 
 Verification
   [x] npm run ts — passes
   [x] npm run build — passes
+  [x] npm run test:coverage — holiday, duration ($10/day), tie-break, threshold cases
 
 ================================================================================
 PART 5: EXTENSIBLE ADD-ONS ARCHITECTURE — COMPLETE
@@ -169,7 +171,7 @@ Checkout (PRD §5.3–5.4)
 
 Verification
   [x] npm run ts — passes
-  [x] npm run build — passes
+  [x] npm run test:coverage — passes
 
 ================================================================================
 REMAINING PARTS

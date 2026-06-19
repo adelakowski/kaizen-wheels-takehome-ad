@@ -451,7 +451,7 @@ export const FICTITIOUS_HOLIDAYS = [
 ] as const;
 
 export const HOLIDAY_DISCOUNT_RATE = 0.17;          // 17% off base
-export const DURATION_DISCOUNT_CENTS_PER_HOUR = 1000; // $10/hr
+export const DURATION_DISCOUNT_CENTS_PER_DAY = 1000; // $10/day
 export const DURATION_THRESHOLD_HOURS = 72;           // > 3 days (strict)
 export const RENTAL_TIMEZONE = 'America/Los_Angeles';
 ```
@@ -525,11 +525,11 @@ function holidayDiscountCents(basePriceCents: number): number {
 
 Qualifies when `durationHours > 72` (strictly greater than 3 days).
 
-**Duration discount amount** — $10/hr off the base rental, applied across all billable hours:
+**Duration discount amount** — $10/day off the base rental, applied across all billable days (same `rentalDayCount` as base pricing):
 
 ```typescript
 function durationDiscountCents(durationHours: number): number {
-  return Math.round(DURATION_DISCOUNT_CENTS_PER_HOUR * durationHours);
+  return DURATION_DISCOUNT_CENTS_PER_DAY * rentalDayCount(durationHours);
 }
 
 function durationDiscountedBaseCents(
@@ -541,7 +541,7 @@ function durationDiscountedBaseCents(
 }
 ```
 
-Equivalently: `discountCents = 1000 * durationHours` subtracted from base.
+Equivalently: `discountCents = 1000 * rentalDayCount(durationHours)` subtracted from base.
 
 #### 4.5 Best-Discount Selection Algorithm
 
@@ -609,7 +609,7 @@ function calculateQuote(
 | Surface | Display |
 |---------|---------|
 | **Search card** | Struck-through base total + discounted total; badge with discount type |
-| **Review page** | Line item: `"Base rental"` → `"Holiday discount (−17%)"` or `"Long-trip discount (−$10/hr × N hrs)"` |
+| **Review page** | Line item: `"Base rental"` → `"Holiday discount (−17%)"` or `"Long-trip discount (−$10/day × N days)"` |
 | **API** | `getQuote()` returns full `QuoteBreakdown`; search embeds same in each result |
 
 **Critical rule:** Discounts apply to **base rental only**, never to add-ons (Part 5).
@@ -776,7 +776,7 @@ State management: `useState<Set<string>>` for selected slugs; derive breakdown w
 |----------|-------------------|
 | Exactly 72 hours | **No** duration discount (`> 72` required) |
 | 72.5 hours | Qualifies |
-| Very long rental (30 days) | Duration discount applies; verify no integer overflow (72h × $10 = $720 discount — fine in cents) |
+| Very long rental (30 days) | Duration discount applies; verify no integer overflow (30 days × $10 = $300 discount — fine in cents) |
 | Duration vs holiday — which wins? | Compute both; apply whichever yields lower `discountedBaseCents` |
 | Tie between discounts | Prefer holiday (arbitrary tie-break; document in DECISIONS.md) |
 

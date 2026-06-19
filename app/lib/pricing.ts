@@ -26,7 +26,7 @@ export function calculateRentalPrice(
   end: DateTime,
   dailyRateCents: number,
 ) {
-  const durationInHours = end.diff(start, "hours").hours || 0;
+  const durationInHours = end.diff(start, "hours").hours;
   const durationDays = rentalDayCount(durationInHours);
 
   return {

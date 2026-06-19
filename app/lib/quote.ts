@@ -15,8 +15,11 @@ export function formatDiscountLabel(breakdown: QuoteBreakdown): string {
     return "Holiday discount (−17%)";
   }
   if (breakdown.discountType === "duration") {
-    const hrs = Math.round(breakdown.durationHours);
-    return `Long-trip discount (−$10/hr × ${hrs} hrs)`;
+    const days =
+      breakdown.durationDays === 1
+        ? "1 day"
+        : `${breakdown.durationDays} days`;
+    return `Long-trip discount (−$10/day × ${days})`;
   }
   return "";
 }

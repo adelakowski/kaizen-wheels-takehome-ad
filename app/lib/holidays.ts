@@ -14,7 +14,8 @@ export const FICTITIOUS_HOLIDAYS = [
 ] as const;
 
 export const HOLIDAY_DISCOUNT_RATE = 0.17;
-export const DURATION_DISCOUNT_CENTS_PER_HOUR = 1000;
+/** Long-trip discount: $10 off per billable rental day (same day-count as base pricing). */
+export const DURATION_DISCOUNT_CENTS_PER_DAY = 1000;
 export const DURATION_THRESHOLD_HOURS = 72;
 export const RENTAL_TIMEZONE = "America/Los_Angeles";
 

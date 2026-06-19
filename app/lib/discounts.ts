@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 
 import {
-  DURATION_DISCOUNT_CENTS_PER_HOUR,
+  DURATION_DISCOUNT_CENTS_PER_DAY,
   DURATION_THRESHOLD_HOURS,
   HOLIDAY_DISCOUNT_RATE,
   qualifiesForHolidayDiscount,
@@ -24,6 +24,7 @@ export function computeDurationHours(start: DateTime, end: DateTime): number {
   return end.diff(start, "hours").hours;
 }
 
+/** Base rental = vehicle daily rate × billable days (ceil of hours / 24, min 1). */
 export function computeBasePriceCents(
   dailyRateCents: number,
   durationHours: number,
@@ -37,7 +38,7 @@ export function holidayDiscountCents(basePriceCents: number): number {
 }
 
 export function durationDiscountCents(durationHours: number): number {
-  return Math.round(DURATION_DISCOUNT_CENTS_PER_HOUR * durationHours);
+  return DURATION_DISCOUNT_CENTS_PER_DAY * rentalDayCount(durationHours);
 }
 
 export function durationDiscountedBaseCents(
@@ -75,15 +76,12 @@ export function calculateQuote(
     });
   }
 
-  const best = candidates.reduce((a, b) =>
-    a.discountedBase < b.discountedBase
-      ? a
-      : a.discountedBase > b.discountedBase
-        ? b
-        : discountPriority(a.type) >= discountPriority(b.type)
-          ? a
-          : b,
-  );
+  const best = [...candidates].sort((a, b) => {
+    if (a.discountedBase !== b.discountedBase) {
+      return a.discountedBase - b.discountedBase;
+    }
+    return discountPriority(b.type) - discountPriority(a.type);
+  })[0];
 
   return {
     durationHours,

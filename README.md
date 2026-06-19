@@ -95,6 +95,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ```bash
 npm run ts      # TypeScript check
+npm run test    # unit tests (domain logic)
 npm run build   # production build
 ```
 
@@ -106,6 +107,8 @@ npm run build   # production build
 | `npm run build` | Production build |
 | `npm run start` | Run production server (after `build`) |
 | `npm run ts` | TypeScript check (`tsc --noEmit`) |
+| `npm run test` | Run unit tests (Vitest) |
+| `npm run test:coverage` | Unit tests with 100% coverage on `app/lib/` |
 | `npm run db:generate` | Generate SQL migrations from `app/server/db/schema.ts` |
 | `npm run db:migrate` | Apply pending migrations |
 | `npm run db:seed` | Truncate and re-seed vehicles, reservations, add-ons |
@@ -169,7 +172,7 @@ Date/time availability filtering plus class, daily price, passengers, and make.
 
 ### **Part 4: Discounts** — complete
 
-Holiday (17%) vs duration ($10/hr after 3 days) — non-stackable, best price wins.
+Holiday (17%) vs duration ($10/day off the daily-rate base after 3+ days) — non-stackable, best price wins. All vehicle rates are **per day**.
 
 ### **Part 5: Optional add-ons** — complete
 
@@ -191,7 +194,7 @@ Briefly justify which filters you chose and why.
 We'd like to add discounts that satisfy these requirements:
 
 - A reservation that includes a holiday but does not start or end on that holiday should receive a 17% discount off the total price. (A list of fictitious holidays is included below.)
-- A reservation for more than 3 days should receive a $10/hr discount on the hourly rate.
+- A reservation for more than 3 days should receive a $10/day discount off the base rental (implemented using the same billable day count as vehicle pricing).
 - These discounts cannot both apply at the same time. If they conflict, the discount with the best price applies to the reservation.
 - Visitors should see the discount reflected during search and checkout, including on the review page.
 
