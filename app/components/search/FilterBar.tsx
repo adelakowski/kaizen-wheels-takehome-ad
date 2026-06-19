@@ -2,33 +2,30 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { format } from "date-fns";
+import { format, max, parse, startOfDay } from "date-fns";
+import { DateTime } from "luxon";
 import {
-  Calendar,
-  Car,
+  CalendarIcon,
   ChevronDown,
   ChevronUp,
+  Clock,
   Minus,
   Plus,
-  Repeat,
   Search,
   SlidersHorizontal,
-  Truck,
-  User,
   Users,
 } from "lucide-react";
 
 import { Button } from "@/components/shared/ui/button";
+import { Calendar } from "@/components/shared/ui/calendar";
 import { Input } from "@/components/shared/ui/input";
 import { Label } from "@/components/shared/ui/label";
-import { RangeSlider } from "@/components/shared/ui/slider";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/shared/ui/sheet";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/shared/ui/popover";
+import { RangeSlider } from "@/components/shared/ui/slider";
 import {
   Select,
   SelectContent,
@@ -36,8 +33,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shared/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/shared/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/shared/ui/toggle-group";
-import { cn } from "@/lib/classnames";
 import { formatCents } from "@/lib/formatters";
 import {
   buildSearchParams,
@@ -46,6 +49,7 @@ import {
   parseSearchFilters,
   type SearchFilters,
 } from "@/lib/search-params";
+import { RENTAL_TIMEZONE } from "@/lib/holidays";
 import type { Classification } from "@/server/data";
 
 const CLASSIFICATIONS: Classification[] = [
@@ -57,16 +61,28 @@ const CLASSIFICATIONS: Classification[] = [
   "Luxury",
 ];
 
-const SERVICE_TABS = [
-  { id: "cars", label: "Cars", icon: Car, active: true },
-  { id: "trucks", label: "Trucks", icon: Truck, active: false },
-  { id: "subscription", label: "Subscription", icon: Repeat, active: false },
-  { id: "transfer", label: "Airport transfer", icon: User, active: false },
-] as const;
-
-const DRIVER_AGE_OPTIONS = ["21+", "25+", "30+", "35+"];
-
 type DateTimeParts = { date: string; time: string };
+
+const TIME_OPTIONS = Array.from({ length: 48 }, (_, index) => {
+  const hours = String(Math.floor(index / 2)).padStart(2, "0");
+  const minutes = index % 2 === 0 ? "00" : "30";
+  return `${hours}:${minutes}`;
+});
+
+function rentalTodayStart(): Date {
+  return DateTime.now().setZone(RENTAL_TIMEZONE).startOf("day").toJSDate();
+}
+
+function parseDateValue(date: string): Date | undefined {
+  if (!date) return undefined;
+  const parsed = new Date(`${date}T12:00:00`);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+function formatTimeLabel(time: string): string {
+  const parsed = parse(time, "HH:mm", new Date());
+  return format(parsed, "h:mm a");
+}
 
 function splitDateTime(iso?: string): DateTimeParts {
   if (!iso) return { date: "", time: "12:00" };
@@ -85,81 +101,92 @@ function combineDateTime(date: string, time: string): string | undefined {
   return combined.toISOString();
 }
 
-function ServiceTabsRow() {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
-      <div className="flex flex-wrap gap-2">
-        {SERVICE_TABS.map(({ id, label, icon: Icon, active }) => (
-          <button
-            key={id}
-            type="button"
-            disabled={!active}
-            className={cn(
-              "inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors",
-              active
-                ? "bg-foreground text-background"
-                : "cursor-not-allowed bg-muted text-muted-foreground opacity-70",
-            )}
-          >
-            <Icon className="h-4 w-4" aria-hidden="true" />
-            {label}
-          </button>
-        ))}
-      </div>
-      <button
-        type="button"
-        className="cursor-pointer text-sm font-medium text-foreground underline-offset-4 hover:underline"
-      >
-        View / edit my booking
-      </button>
-    </div>
-  );
-}
-
 function DateTimeField({
   id,
   label,
   parts,
   onChange,
+  minDate = rentalTodayStart(),
 }: {
   id: string;
   label: string;
   parts: DateTimeParts;
   onChange: (next: DateTimeParts) => void;
+  minDate?: Date;
 }) {
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const selectedDate = parseDateValue(parts.date);
+  const earliestDate = startOfDay(minDate);
+
   return (
-    <div className="min-w-[200px]">
+    <div className="min-w-[220px]">
       <Label
         htmlFor={`${id}-date`}
         className="mb-1.5 block text-xs font-semibold text-foreground"
       >
         {label}
       </Label>
-      <div className="flex h-12 overflow-hidden rounded-xl border border-input bg-background">
-        <div className="flex min-w-0 flex-1 items-center gap-2 border-r border-input px-3">
-          <Calendar
-            className="h-4 w-4 shrink-0 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <input
-            id={`${id}-date`}
-            type="date"
-            value={parts.date}
-            onChange={(event) =>
-              onChange({ ...parts, date: event.target.value })
-            }
-            className="min-w-0 flex-1 bg-transparent text-sm outline-none"
-          />
-        </div>
-        <input
-          id={`${id}-time`}
-          type="time"
+      <div className="flex h-12 overflow-hidden rounded-xl border border-input bg-background shadow-sm">
+        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              id={`${id}-date`}
+              type="button"
+              variant="ghost"
+              className="h-full min-w-0 flex-1 justify-start gap-2 rounded-none border-r border-input px-3 font-normal hover:bg-muted/50"
+            >
+              <CalendarIcon
+                className="h-4 w-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <span className="truncate text-sm">
+                {selectedDate ? (
+                  format(selectedDate, "MMM d, yyyy")
+                ) : (
+                  <span className="text-muted-foreground">Pick date</span>
+                )}
+              </span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto rounded-xl p-0 shadow-lg" align="start">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              disabled={{ before: earliestDate }}
+              defaultMonth={selectedDate ?? earliestDate}
+              onSelect={(date) => {
+                if (!date) return;
+                onChange({ ...parts, date: format(date, "yyyy-MM-dd") });
+                setCalendarOpen(false);
+              }}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+
+        <Select
           value={parts.time}
-          onChange={(event) =>
-            onChange({ ...parts, time: event.target.value })
-          }
-          className="w-[7.5rem] shrink-0 bg-transparent px-3 text-sm outline-none"
-        />
+          onValueChange={(time) => onChange({ ...parts, time })}
+        >
+          <SelectTrigger
+            id={`${id}-time`}
+            aria-label={`${label} time`}
+            className="h-full w-[9.5rem] shrink-0 rounded-none border-0 shadow-none focus:ring-0 focus:ring-offset-0 [&>span]:line-clamp-none [&>svg:last-child]:hidden"
+          >
+            <Clock
+              className="mr-1.5 h-4 w-4 shrink-0 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <SelectValue placeholder="Time" />
+          </SelectTrigger>
+          <SelectContent className="max-h-60">
+            {TIME_OPTIONS.map((time) => (
+              <SelectItem key={time} value={time} className="cursor-pointer">
+                {formatTimeLabel(time)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );
@@ -301,7 +328,6 @@ function BookingWidget({
   showAdvancedToggle?: boolean;
 }) {
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [differentReturn, setDifferentReturn] = useState(false);
   const pickup = splitDateTime(draft.startTime);
   const dropoff = splitDateTime(draft.endTime);
 
@@ -321,28 +347,14 @@ function BookingWidget({
 
   return (
     <div className="space-y-3">
-      <ServiceTabsRow />
-
-      {/* Primary search row */}
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
         <div className="min-w-0 flex-1">
-          <div className="mb-1.5 flex items-center justify-between gap-2">
-            <Label
-              htmlFor="location"
-              className="text-xs font-semibold text-foreground"
-            >
-              Pickup & return
-            </Label>
-            <button
-              type="button"
-              onClick={() => setDifferentReturn((value) => !value)}
-              className="shrink-0 cursor-pointer text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-            >
-              {differentReturn
-                ? "Same return location"
-                : "+ Different return location"}
-            </button>
-          </div>
+          <Label
+            htmlFor="location"
+            className="mb-1.5 block text-xs font-semibold text-foreground"
+          >
+            Pickup & return
+          </Label>
           <div className="relative">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -370,6 +382,10 @@ function BookingWidget({
           label="Return date"
           parts={dropoff}
           onChange={updateDropoff}
+          minDate={max([
+            rentalTodayStart(),
+            parseDateValue(pickup.date) ?? rentalTodayStart(),
+          ])}
         />
 
         <Button
@@ -383,31 +399,6 @@ function BookingWidget({
 
       {/* Secondary filters row */}
       <div className="flex flex-wrap items-center gap-4 border-t border-border pt-4">
-        <div className="flex min-w-[180px] items-center gap-2">
-          <User className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-          <Select defaultValue="30+">
-            <SelectTrigger className="h-10 w-full cursor-pointer rounded-xl border-input">
-              <SelectValue placeholder="Driver's age" />
-            </SelectTrigger>
-            <SelectContent>
-              {DRIVER_AGE_OPTIONS.map((age) => (
-                <SelectItem key={age} value={age} className="cursor-pointer">
-                  Driver&apos;s age {age}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="hidden h-8 w-px bg-border sm:block" />
-
-        <button
-          type="button"
-          className="cursor-pointer text-sm font-medium text-foreground underline-offset-4 hover:underline"
-        >
-          Apply corporate rate
-        </button>
-
         {showAdvancedToggle && (
           <button
             type="button"
